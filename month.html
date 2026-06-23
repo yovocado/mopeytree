@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mopeytree</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #edeae2;
+      --paper: #f5f2ea;
+      --text: #1c1810;
+      --muted: #8c8679;
+      --faint: #b8b3a8;
+      --card: #faf8f3;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'EB Garamond', Georgia, serif;
+      min-height: 100vh;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.045;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── HEADER ── */
+    .page-header {
+      padding: 48px 48px 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .back {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.58rem;
+      color: var(--faint);
+      letter-spacing: 0.14em;
+      text-decoration: none;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding-top: 6px;
+      transition: color 0.2s;
+    }
+    .back:hover { color: var(--muted); }
+    .back::before { content: '←'; font-size: 0.7rem; }
+
+    .month-title {
+      font-family: 'EB Garamond', serif;
+      font-size: clamp(1.6rem, 4vw, 2.6rem);
+      font-weight: 400;
+      font-style: italic;
+      letter-spacing: 0.02em;
+      color: var(--text);
+    }
+
+    .month-meta {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.52rem;
+      color: var(--faint);
+      letter-spacing: 0.1em;
+      margin-top: 6px;
+    }
+
+    /* ── NOTE ── */
+    .month-note {
+      padding: 28px 48px 0;
+      max-width: 520px;
+      font-size: 1rem;
+      font-style: italic;
+      color: var(--muted);
+      line-height: 1.9;
+    }
+
+    .month-note:empty { display: none; }
+
+    /* ── DIVIDER ── */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 36px 48px 0;
+    }
+
+    .section-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--faint);
+      opacity: 0.4;
+    }
+
+    .section-divider span {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.48rem;
+      color: var(--faint);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* ── PHOTO GRID ── */
+    .photo-grid {
+      padding: 28px 48px 80px;
+      columns: 3;
+      column-gap: 16px;
+    }
+
+    @media (max-width: 720px) {
+      .photo-grid { columns: 2; padding: 20px 20px 60px; }
+      .page-header { padding: 32px 20px 0; }
+      .month-note { padding: 20px 20px 0; }
+      .section-divider { padding: 28px 20px 0; }
+    }
+
+    @media (max-width: 420px) {
+      .photo-grid { columns: 1; }
+    }
+
+    .photo-item {
+      break-inside: avoid;
+      margin-bottom: 16px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .photo-item.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .photo-item img {
+      width: 100%;
+      display: block;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    }
+
+    .photo-caption {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.48rem;
+      color: var(--faint);
+      letter-spacing: 0.08em;
+      margin-top: 6px;
+      line-height: 1.6;
+    }
+
+    /* empty state */
+    .empty-state {
+      padding: 80px 48px;
+      text-align: center;
+    }
+
+    .empty-state p {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      color: var(--faint);
+      letter-spacing: 0.1em;
+    }
+
+    /* site name fixed */
+    .site-link {
+      position: fixed;
+      bottom: 24px;
+      left: 28px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.48rem;
+      color: var(--faint);
+      letter-spacing: 0.14em;
+      text-decoration: none;
+      text-transform: lowercase;
+      transition: color 0.2s;
+    }
+    .site-link:hover { color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <a href="index.html" class="back">mopeytree</a>
+    <div>
+      <h1 class="month-title" id="month-title">—</h1>
+      <p class="month-meta" id="month-meta"></p>
+    </div>
+  </header>
+
+  <p class="month-note" id="month-note"></p>
+
+  <div class="section-divider"><span id="frame-count"></span></div>
+
+  <div class="photo-grid" id="photo-grid"></div>
+
+  <a href="index.html" class="site-link">← back</a>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const monthId = params.get('month');
+
+    fetch('data.json')
+      .then(r => r.json())
+      .then(data => {
+        const month = (data.months || []).find(m => m.id === monthId);
+        if (!month) {
+          document.getElementById('month-title').textContent = 'not found';
+          return;
+        }
+
+        document.title = `${month.label} — mopeytree`;
+        document.getElementById('month-title').textContent = month.label;
+        document.getElementById('month-note').textContent = month.note || '';
+
+        const photos = month.photos || [];
+        const countEl = document.getElementById('frame-count');
+        countEl.textContent = `${photos.length} frame${photos.length !== 1 ? 's' : ''}`;
+
+        // month meta: derive year-month display
+        document.getElementById('month-meta').textContent = month.id || '';
+
+        const grid = document.getElementById('photo-grid');
+
+        if (photos.length === 0) {
+          grid.innerHTML = '';
+          const empty = document.createElement('div');
+          empty.className = 'empty-state';
+          empty.innerHTML = `<p>photos coming soon.</p>`;
+          grid.parentNode.insertBefore(empty, grid);
+          return;
+        }
+
+        photos.forEach((photo, i) => {
+          const item = document.createElement('div');
+          item.className = 'photo-item';
+
+          item.innerHTML = `
+            <img src="${photo.file}" alt="${photo.caption || ''}" loading="lazy">
+            ${photo.caption ? `<p class="photo-caption">${photo.caption}</p>` : ''}
+          `;
+
+          grid.appendChild(item);
+
+          setTimeout(() => item.classList.add('visible'), 60 + i * 80);
+        });
+      });
+  </script>
+
+</body>
+</html>
