@@ -215,7 +215,7 @@
     /* detail modal */
     .detail-photo-wrap {
       width: 100%;
-      aspect-ratio: 3/4;
+      aspect-ratio: 16/9;
       background: var(--bg);
       position: relative;
       overflow: hidden;
@@ -499,10 +499,10 @@
 
       <div class="detail-photo-wrap" id="detail-photo-wrap">
         <div class="detail-photo-placeholder" onclick="triggerPhotoUpload()" id="detail-photo-placeholder">
-          <span>点击上传照片</span>
+          <span>写真。載せて</span>
         </div>
         <img class="detail-photo" id="detail-photo-img" src="" alt="" style="display:none">
-        <button class="photo-upload-btn" onclick="triggerPhotoUpload()" id="photo-change-btn" style="display:none">更换照片</button>
+        <button class="photo-upload-btn" onclick="triggerPhotoUpload()" id="photo-change-btn" style="display:none">更新</button>
       </div>
       <input type="file" id="photo-file-input" accept="image/*" onchange="handlePhotoUpload(event)">
 
