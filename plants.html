@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>plants — mopeytree</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #edeae2;
+      --text: #1c1810;
+      --muted: #8c8679;
+      --faint: #b8b3a8;
+      --card: #faf8f3;
+      --overdue-bg: #f0e8e3;
+      --overdue-text: #8a3a20;
+      --due-bg: #eee8d8;
+      --due-text: #7a6028;
+      --ok-bg: #e4eae4;
+      --ok-text: #3a6045;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'EB Garamond', Georgia, serif;
+      min-height: 100vh;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.045;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── HEADER ── */
+    .page-header {
+      padding: 40px 40px 0;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: baseline;
+      gap: 20px;
+    }
+
+    .back {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      color: var(--faint);
+      letter-spacing: 0.14em;
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .back:hover { color: var(--muted); }
+
+    .page-title {
+      font-family: 'EB Garamond', serif;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    .add-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.5rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: none;
+      border: 1px solid var(--faint);
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .add-btn:hover { border-color: var(--muted); color: var(--text); }
+
+    /* ── SECTIONS ── */
+    .section { padding: 32px 40px 0; }
+
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.46rem;
+      color: var(--faint);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--faint);
+      opacity: 0.4;
+    }
+
+    /* ── WATERING REMINDERS ── */
+    .reminder-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .reminder-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 16px;
+      background: var(--card);
+      border-left: 3px solid transparent;
+      border: 1px solid rgba(0,0,0,0.04);
+      border-left: 3px solid transparent;
+    }
+    .reminder-item.overdue  { border-left-color: #c4714a; background: var(--overdue-bg); }
+    .reminder-item.due-today { border-left-color: #c4a840; background: var(--due-bg); }
+    .reminder-item.due-soon  { border-left-color: #90a878; }
+
+    .reminder-name { font-size: 1rem; font-style: italic; }
+    .reminder-sub {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.44rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      margin-top: 3px;
+    }
+    .overdue  .reminder-sub { color: var(--overdue-text); }
+    .due-today .reminder-sub { color: var(--due-text); }
+
+    .water-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.46rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: none;
+      border: 1px solid var(--faint);
+      color: var(--muted);
+      padding: 5px 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .water-btn:hover { border-color: var(--muted); color: var(--text); }
+
+    /* ── PLANT GRID ── */
+    .plant-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .plant-card {
+      background: var(--card);
+      padding: 16px 18px;
+      cursor: pointer;
+      border: 1px solid rgba(0,0,0,0.05);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .plant-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+
+    .plant-name { font-size: 1.05rem; font-style: italic; margin-bottom: 3px; }
+
+    .plant-group {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.42rem;
+      color: var(--faint);
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+
+    .plant-location { font-size: 0.82rem; color: var(--muted); margin-bottom: 8px; }
+
+    .plant-status {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.42rem;
+      letter-spacing: 0.08em;
+      padding: 2px 7px;
+      display: inline-block;
+    }
+    .plant-status.overdue   { background: var(--overdue-bg); color: var(--overdue-text); }
+    .plant-status.due-today { background: var(--due-bg);     color: var(--due-text); }
+    .plant-status.due-soon  { background: var(--ok-bg);      color: var(--ok-text); }
+    .plant-status.ok        { color: var(--faint); }
+
+    /* ── MODAL ── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(28,24,16,0.42);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: var(--card);
+      padding: 32px;
+      max-width: 480px;
+      width: 100%;
+      max-height: 88vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .modal-title {
+      font-size: 1.3rem;
+      font-style: italic;
+      margin-bottom: 20px;
+      padding-right: 32px;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: none;
+      border: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.5rem;
+      color: var(--faint);
+      cursor: pointer;
+      letter-spacing: 0.1em;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    /* ── FORM ── */
+    .form-group { margin-bottom: 14px; }
+
+    .form-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.46rem;
+      color: var(--faint);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--faint);
+      color: var(--text);
+      font-family: 'EB Garamond', serif;
+      font-size: 0.95rem;
+      padding: 7px 10px;
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--muted);
+    }
+    .form-textarea { resize: vertical; min-height: 64px; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.48rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: var(--text);
+      color: var(--card);
+      border: none;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    .btn-secondary {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.48rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--faint);
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    .btn-danger {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.48rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: none;
+      color: #a0432a;
+      border: 1px solid #d4a090;
+      padding: 8px 16px;
+      cursor: pointer;
+      margin-right: auto;
+    }
+
+    /* ── DETAIL MODAL ── */
+    .detail-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .detail-field label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.42rem;
+      color: var(--faint);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 3px;
+    }
+    .detail-field span { font-size: 0.9rem; color: var(--text); }
+
+    /* ── LOG ── */
+    .log-section {
+      border-top: 1px solid rgba(0,0,0,0.08);
+      padding-top: 16px;
+      margin-top: 4px;
+    }
+
+    .log-item {
+      display: flex;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .log-date {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.42rem;
+      color: var(--faint);
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      padding-top: 3px;
+      min-width: 70px;
+    }
+
+    .log-action { font-size: 0.85rem; color: var(--muted); }
+    .log-notes  { font-size: 0.8rem; color: var(--faint); font-style: italic; margin-top: 1px; }
+
+    .add-log-form {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .add-log-form .form-select { flex: 0 0 auto; width: 110px; }
+    .add-log-form .form-input  { flex: 1; min-width: 100px; }
+
+    /* ── MISC ── */
+    .empty {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.48rem;
+      color: var(--faint);
+      letter-spacing: 0.1em;
+      padding: 12px 0;
+    }
+
+    .loading {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.48rem;
+      color: var(--faint);
+      letter-spacing: 0.1em;
+      padding: 32px;
+      text-align: center;
+    }
+
+    .bottom-spacer { height: 80px; }
+
+    /* ── MOBILE ── */
+    @media (max-width: 620px) {
+      .page-header { padding: 28px 20px 0; }
+      .section      { padding: 24px 20px 0; }
+      .plant-grid   { grid-template-columns: 1fr 1fr; }
+      .modal        { padding: 24px 18px; }
+      .detail-info  { grid-template-columns: 1fr; }
+      .form-row     { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 360px) {
+      .plant-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="header-left">
+      <a href="index.html" class="back">← mopeytree</a>
+      <h1 class="page-title">plants</h1>
+    </div>
+    <button class="add-btn" onclick="openAddModal()">+ 添加植物</button>
+  </header>
+
+  <!-- Watering reminders -->
+  <div class="section">
+    <div class="section-label">今日水分</div>
+    <div class="reminder-list" id="reminder-list">
+      <div class="loading">loading...</div>
+    </div>
+  </div>
+
+  <!-- All plants -->
+  <div class="section">
+    <div class="section-label">所有植物</div>
+    <div class="plant-grid" id="plant-grid">
+      <div class="loading">loading...</div>
+    </div>
+  </div>
+
+  <div class="bottom-spacer"></div>
+
+  <!-- ── ADD / EDIT MODAL ── -->
+  <div class="modal-backdrop" id="form-modal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeFormModal()">✕ 关闭</button>
+      <h2 class="modal-title" id="form-modal-title">添加植物</h2>
+      <form id="plant-form" onsubmit="submitPlantForm(event)">
+        <div class="form-group">
+          <label class="form-label">名称</label>
+          <input class="form-input" type="text" id="f-name" required placeholder="例：龟背竹">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">分组</label>
+            <input class="form-input" type="text" id="f-group" placeholder="例：室内散射光组">
+          </div>
+          <div class="form-group">
+            <label class="form-label">光照需求</label>
+            <input class="form-input" type="text" id="f-light" placeholder="例：散射光">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">位置</label>
+          <input class="form-input" type="text" id="f-location" placeholder="例：室内窗边">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">浇水频率（天）</label>
+            <input class="form-input" type="number" id="f-freq" min="1" required placeholder="例：7">
+          </div>
+          <div class="form-group">
+            <label class="form-label">上次浇水日期</label>
+            <input class="form-input" type="date" id="f-last-watered">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">备注</label>
+          <textarea class="form-textarea" id="f-notes" placeholder="养护要点、特殊需求等"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-danger" id="delete-btn" onclick="confirmDelete()" style="display:none">删除植物</button>
+          <button type="button" class="btn-secondary" onclick="closeFormModal()">取消</button>
+          <button type="submit" class="btn-primary" id="form-submit-btn">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── DETAIL MODAL ── -->
+  <div class="modal-backdrop" id="detail-modal">
+    <div class="modal" style="max-width:520px">
+      <button class="modal-close" onclick="closeDetailModal()">✕ 关闭</button>
+      <h2 class="modal-title" id="detail-name"></h2>
+      <div class="detail-info" id="detail-info"></div>
+
+      <div class="log-section">
+        <div class="section-label" style="margin-bottom:10px">养护记录</div>
+        <div id="detail-logs"></div>
+        <div class="add-log-form">
+          <select class="form-select" id="log-action-select">
+            <option value="water">浇水</option>
+            <option value="fertilize">施肥</option>
+            <option value="repot">换盆</option>
+            <option value="trim">修剪</option>
+            <option value="move">移位</option>
+            <option value="note">备注</option>
+          </select>
+          <input class="form-input" type="text" id="log-notes-input" placeholder="备注（可选）">
+          <button class="btn-primary" onclick="addLog()">记录</button>
+        </div>
+      </div>
+
+      <div class="form-actions" style="margin-top:16px">
+        <button class="btn-secondary" onclick="openEditFromDetail()">编辑植物</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ── Init ──
+    firebase.initializeApp({
+      apiKey: "AIzaSyDyoFHUE1Tr6t1gXAU4qL3qi0lNls5ItQU",
+      authDomain: "mopeytree.firebaseapp.com",
+      projectId: "mopeytree",
+      storageBucket: "mopeytree.firebasestorage.app",
+      messagingSenderId: "743700580569",
+      appId: "1:743700580569:web:62585c863c5a5c986296c8"
+    });
+    const db = firebase.firestore();
+    const plantsRef = db.collection('plants');
+    const logsRef   = db.collection('logs');
+
+    // ── State ──
+    let plants = [];
+    let currentEditId   = null;
+    let currentDetailId = null;
+
+    // ── Helpers ──
+    const todayStr = () => new Date().toISOString().split('T')[0];
+
+    function getDaysUntil(plant) {
+      if (!plant.lastWateredDate) return -999;
+      const last = new Date(plant.lastWateredDate + 'T00:00:00');
+      const next = new Date(last);
+      next.setDate(next.getDate() + (plant.wateringFrequencyDays || 7));
+      const now = new Date(); now.setHours(0,0,0,0);
+      return Math.ceil((next - now) / 86400000);
+    }
+
+    function statusInfo(days) {
+      if (days <= -1)  return { cls: 'overdue',   text: `逾期 ${Math.abs(days)} 天` };
+      if (days === 0)  return { cls: 'due-today',  text: '今天浇水' };
+      if (days === 1)  return { cls: 'due-soon',   text: '明天浇水' };
+      if (days <= 3)   return { cls: 'due-soon',   text: `${days} 天后浇水` };
+      return              { cls: 'ok',         text: `${days} 天后浇水` };
+    }
+
+    const ACTION_LABELS = {
+      water: '浇水', fertilize: '施肥', repot: '换盆',
+      trim: '修剪', move: '移位', note: '备注'
+    };
+
+    // ── Data ──
+    async function loadPlants() {
+      const snap = await plantsRef.orderBy('name').get();
+      plants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderReminders();
+      renderGrid();
+    }
+
+    async function markWatered(plantId, e) {
+      e.stopPropagation();
+      const t = todayStr();
+      await plantsRef.doc(plantId).update({ lastWateredDate: t });
+      await logsRef.add({
+        plantId, action: 'water', date: t, notes: '',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await loadPlants();
+    }
+
+    async function seedIfEmpty() {
+      const snap = await plantsRef.limit(1).get();
+      if (!snap.empty) return;
+      const initial = [
+        { name: '红掌',           group: '室内散射光组', location: '室内窗边',               light: '散射光', wateringFrequencyDays: 4,  lastWateredDate: null, notes: '' },
+        { name: '雪莹（粗肋草）', group: '室内散射光组', location: '电视柜下层（需挪到窗边）', light: '散射光', wateringFrequencyDays: 4,  lastWateredDate: null, notes: '' },
+        { name: '龟背竹',         group: '室内散射光组', location: '室内窗边',               light: '散射光', wateringFrequencyDays: 6,  lastWateredDate: null, notes: '' },
+        { name: '蔓绿绒',         group: '室内散射光组', location: '电视柜下层（需挪到窗边）', light: '散射光', wateringFrequencyDays: 4,  lastWateredDate: null, notes: '' },
+        { name: '封蜡富贵竹',     group: '室内散射光组', location: '电视柜下层（需挪到窗边）', light: '散射光', wateringFrequencyDays: 7,  lastWateredDate: null, notes: '水培，每周换水' },
+        { name: '空心菜',         group: '阳台全日照组', location: '阳台直晒',               light: '全日照', wateringFrequencyDays: 1,  lastWateredDate: null, notes: '每天浇透' },
+        { name: '白桃扇仙人掌',   group: '阳台全日照组', location: '阳台',                   light: '全日照', wateringFrequencyDays: 18, lastWateredDate: null, notes: 'Opuntia microdasys 兔耳朵' },
+      ];
+      for (const p of initial) {
+        await plantsRef.add({ ...p, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      }
+    }
+
+    // ── Render ──
+    function renderReminders() {
+      const el = document.getElementById('reminder-list');
+      const urgent = plants
+        .map(p => ({ ...p, days: getDaysUntil(p) }))
+        .filter(p => p.days <= 1)
+        .sort((a, b) => a.days - b.days);
+
+      if (urgent.length === 0) {
+        el.innerHTML = `<p class="empty">暂时没有需要浇水的植物 ✓</p>`;
+        return;
+      }
+      el.innerHTML = urgent.map(p => {
+        const s = statusInfo(p.days);
+        return `<div class="reminder-item ${s.cls}">
+          <div>
+            <div class="reminder-name">${p.name}</div>
+            <div class="reminder-sub">${s.text} · ${p.location || ''}</div>
+          </div>
+          <button class="water-btn" onclick="markWatered('${p.id}', event)">已浇水</button>
+        </div>`;
+      }).join('');
+    }
+
+    function renderGrid() {
+      const el = document.getElementById('plant-grid');
+      if (plants.length === 0) {
+        el.innerHTML = `<p class="empty">还没有植物，点右上角添加</p>`;
+        return;
+      }
+      el.innerHTML = plants.map(p => {
+        const s = statusInfo(getDaysUntil(p));
+        return `<div class="plant-card" onclick="openDetail('${p.id}')">
+          <div class="plant-name">${p.name}</div>
+          <div class="plant-group">${p.group || ''}</div>
+          <div class="plant-location">${p.location || ''}</div>
+          <span class="plant-status ${s.cls}">${s.text}</span>
+        </div>`;
+      }).join('');
+    }
+
+    // ── Form Modal ──
+    function openAddModal() {
+      currentEditId = null;
+      document.getElementById('form-modal-title').textContent = '添加植物';
+      document.getElementById('plant-form').reset();
+      document.getElementById('delete-btn').style.display = 'none';
+      document.getElementById('form-submit-btn').textContent = '保存';
+      document.getElementById('form-modal').classList.add('open');
+    }
+
+    function openEditModal(plant) {
+      currentEditId = plant.id;
+      document.getElementById('form-modal-title').textContent = '编辑植物';
+      document.getElementById('f-name').value         = plant.name || '';
+      document.getElementById('f-group').value        = plant.group || '';
+      document.getElementById('f-light').value        = plant.light || '';
+      document.getElementById('f-location').value     = plant.location || '';
+      document.getElementById('f-freq').value         = plant.wateringFrequencyDays || '';
+      document.getElementById('f-last-watered').value = plant.lastWateredDate || '';
+      document.getElementById('f-notes').value        = plant.notes || '';
+      document.getElementById('delete-btn').style.display = 'block';
+      document.getElementById('form-submit-btn').textContent = '保存修改';
+      document.getElementById('form-modal').classList.add('open');
+    }
+
+    function closeFormModal() {
+      document.getElementById('form-modal').classList.remove('open');
+    }
+
+    async function submitPlantForm(e) {
+      e.preventDefault();
+      const data = {
+        name:                 document.getElementById('f-name').value.trim(),
+        group:                document.getElementById('f-group').value.trim(),
+        light:                document.getElementById('f-light').value.trim(),
+        location:             document.getElementById('f-location').value.trim(),
+        wateringFrequencyDays: parseInt(document.getElementById('f-freq').value),
+        lastWateredDate:      document.getElementById('f-last-watered').value || null,
+        notes:                document.getElementById('f-notes').value.trim(),
+      };
+      if (currentEditId) {
+        await plantsRef.doc(currentEditId).update(data);
+      } else {
+        await plantsRef.add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      }
+      closeFormModal();
+      await loadPlants();
+    }
+
+    async function confirmDelete() {
+      if (!currentEditId || !confirm('确定删除这盆植物吗？')) return;
+      await plantsRef.doc(currentEditId).delete();
+      closeFormModal();
+      closeDetailModal();
+      await loadPlants();
+    }
+
+    // ── Detail Modal ──
+    async function openDetail(plantId) {
+      currentDetailId = plantId;
+      const plant = plants.find(p => p.id === plantId);
+      if (!plant) return;
+
+      document.getElementById('detail-name').textContent = plant.name;
+
+      const s = statusInfo(getDaysUntil(plant));
+      document.getElementById('detail-info').innerHTML = `
+        <div class="detail-field"><label>分组</label><span>${plant.group || '—'}</span></div>
+        <div class="detail-field"><label>位置</label><span>${plant.location || '—'}</span></div>
+        <div class="detail-field"><label>光照</label><span>${plant.light || '—'}</span></div>
+        <div class="detail-field"><label>浇水频率</label><span>每 ${plant.wateringFrequencyDays} 天</span></div>
+        <div class="detail-field"><label>上次浇水</label><span>${plant.lastWateredDate || '未记录'}</span></div>
+        <div class="detail-field"><label>状态</label><span class="plant-status ${s.cls}">${s.text}</span></div>
+        ${plant.notes ? `<div class="detail-field" style="grid-column:1/-1"><label>备注</label><span>${plant.notes}</span></div>` : ''}
+      `;
+
+      const snap = await logsRef
+        .where('plantId', '==', plantId)
+        .orderBy('createdAt', 'desc')
+        .limit(30)
+        .get();
+
+      const logsEl = document.getElementById('detail-logs');
+      logsEl.innerHTML = snap.empty
+        ? `<p class="empty">暂无记录</p>`
+        : snap.docs.map(d => {
+            const l = d.data();
+            return `<div class="log-item">
+              <div class="log-date">${l.date || ''}</div>
+              <div>
+                <div class="log-action">${ACTION_LABELS[l.action] || l.action}</div>
+                ${l.notes ? `<div class="log-notes">${l.notes}</div>` : ''}
+              </div>
+            </div>`;
+          }).join('');
+
+      document.getElementById('detail-modal').classList.add('open');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detail-modal').classList.remove('open');
+      currentDetailId = null;
+    }
+
+    function openEditFromDetail() {
+      const plant = plants.find(p => p.id === currentDetailId);
+      if (!plant) return;
+      closeDetailModal();
+      openEditModal(plant);
+    }
+
+    async function addLog() {
+      if (!currentDetailId) return;
+      const action = document.getElementById('log-action-select').value;
+      const notes  = document.getElementById('log-notes-input').value.trim();
+      const t = todayStr();
+      await logsRef.add({
+        plantId: currentDetailId, action, date: t, notes,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      document.getElementById('log-notes-input').value = '';
+      if (action === 'water') {
+        await plantsRef.doc(currentDetailId).update({ lastWateredDate: t });
+        await loadPlants();
+      }
+      await openDetail(currentDetailId);
+    }
+
+    // backdrop click to close
+    document.getElementById('form-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeFormModal(); });
+    document.getElementById('detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeDetailModal(); });
+
+    // ── Boot ──
+    (async () => {
+      try {
+        await seedIfEmpty();
+        await loadPlants();
+      } catch (err) {
+        document.getElementById('plant-grid').innerHTML =
+          `<p class="empty">连接失败，请检查网络或 Firebase 配置。</p>`;
+        console.error(err);
+      }
+    })();
+  </script>
+
+</body>
+</html>
