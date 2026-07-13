@@ -100,6 +100,21 @@
       margin-top: 3px;
     }
 
+    .plants-link {
+      position: fixed;
+      bottom: 24px;
+      left: 28px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.48rem;
+      color: var(--faint);
+      letter-spacing: 0.14em;
+      text-decoration: none;
+      text-transform: lowercase;
+      transition: color 0.2s;
+      z-index: 100;
+    }
+    .plants-link:hover { color: var(--muted); }
+
     /* ── STATUS CORNER ── */
     .status {
       position: fixed;
@@ -280,6 +295,8 @@
     <span class="status-label">now</span>
     <span class="status-text" id="mood-text"></span>
   </div>
+
+  <a href="plants.html" class="plants-link">plants</a>
 
   <script>
     // predefined scatter positions (top%, left%, rotate deg)
