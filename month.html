@@ -216,6 +216,20 @@
       z-index: 2;
     }
 
+    .photo-cover-btn {
+  position: absolute;
+  bottom: 8px; right: 8px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.38rem;
+  background: rgba(250,248,243,0.92);
+  border: 1px solid var(--faint);
+  color: var(--muted);
+  padding: 3px 8px;
+  cursor: pointer;
+  display: none;
+  z-index: 2;
+}
+
     /* caption */
     .photo-caption-wrap {
       border-left: 1px solid var(--faint);
@@ -500,6 +514,7 @@
         <div class="photo-frame">
           <img src="${p.base64}" alt="${p.caption || ''}" loading="lazy">
           <button class="photo-delete-btn" onclick="deletePhoto('${p.id}')">删除</button>
+          <button class="photo-cover-btn" onclick="setCover('${p.id}')">设为封面</button>
         </div>
         <div class="photo-caption-wrap">
           <p class="photo-caption">${p.caption || ''}</p>
@@ -533,6 +548,7 @@
 
     // photos
     document.querySelectorAll('.photo-delete-btn').forEach(b => b.style.display = isEditMode ? 'block' : 'none');
+    document.querySelectorAll('.photo-cover-btn').forEach(b => b.style.display = isEditMode ? 'block' : 'none');
     document.querySelectorAll('.photo-caption').forEach(p  => p.style.display   = isEditMode ? 'none' : 'block');
     document.querySelectorAll('.caption-input').forEach(inp => inp.style.display = isEditMode ? 'block' : 'none');
 
@@ -594,6 +610,15 @@
       `${photos.length} frame${photos.length !== 1 ? 's' : ''}`;
   }
 
+  async function setCover(photoId) {
+  const p = photos.find(x => x.id === photoId);
+  if (!p) return;
+  await monthsRef.doc(monthId).update({ coverBase64: p.base64 });
+  document.querySelectorAll('.photo-cover-btn').forEach(b => b.textContent = '设为封面');
+  const btn = document.querySelector(`.photo-item[data-id="${photoId}"] .photo-cover-btn`);
+  if (btn) btn.textContent = '✓ 已设为封面';
+}
+  
   // ── delete ──
   async function deletePhoto(photoId) {
     if (!confirm('删除这张照片？')) return;
