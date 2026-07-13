@@ -117,6 +117,8 @@
       transition: transform 0.2s, box-shadow 0.2s;
       overflow: hidden;
       position: relative;
+      z-index: 1;
+      pointer-events: auto;
     }
     .plant-card:hover {
       transform: translateY(-3px);
@@ -677,10 +679,7 @@
         </div>`;
       }).join('');
 
-      // attach click to each card individually
-      grid.querySelectorAll('.plant-card').forEach(card => {
-        card.addEventListener('click', () => openDetail(card.dataset.id));
-      });
+      // cards rendered, clicks handled at document level below
     }
 
     // ── Detail ──
@@ -864,6 +863,12 @@
     // backdrop click
     document.getElementById('detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeDetail(); });
     document.getElementById('form-modal').addEventListener('click',   e => { if (e.target === e.currentTarget) closeForm(); });
+
+    // document-level card click — catches everything regardless of z-index
+    document.addEventListener('click', e => {
+      const card = e.target.closest('.plant-card');
+      if (card && card.dataset.id) openDetail(card.dataset.id);
+    });
 
     // ── Seed & Boot ──
     async function seedIfEmpty() {
