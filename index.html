@@ -331,56 +331,66 @@
       'f/3.5 · 1/40s  · ISO 800',
     ];
 
-    fetch('data.json')
-      .then(r => r.json())
-      .then(data => {
-        // mood
-        document.getElementById('mood-text').textContent = data.mood || '';
+    // Firebase 初始化
+firebase.initializeApp({
+  apiKey: "AIzaSyDy•••••••••••••••••••••••••••••••",
+  authDomain: "mopeytree.firebaseapp.com",
+  projectId: "mopeytree",
+  storageBucket: "mopeytree.firebasestorage.app",
+  messagingSenderId: "743700580569",
+  appId: "1:743700580569:web:62585c863c5a5c986296c8"
+});
+const db = firebase.firestore();
 
-        const scatter = document.getElementById('scatter');
-        const months = data.months || [];
+// 心情还是从 data.json 读
+fetch('data.json').then(r => r.json()).then(d => {
+  document.getElementById('mood-text').textContent = d.mood || '';
+}).catch(() => {});
 
-        months.forEach((month, i) => {
-          const slot = SLOTS[i % SLOTS.length];
-          const [top, left, rotate] = slot;
-          const exif = EXIF[i % EXIF.length];
+// 月份卡片从 Firebase 读
+db.collection('months').get().then(snap => {
+  const months = snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => b.id.localeCompare(a.id));
 
-          const a = document.createElement('a');
-          a.className = 'month-card';
-          a.href = `month.html?month=${month.id}`;
-          a.style.top = `${top}%`;
-          a.style.left = `${left}%`;
-          a.style.setProperty('--base-transform', `rotate(${rotate}deg)`);
-          a.style.transform = `rotate(${rotate}deg)`;
+  const scatter = document.getElementById('scatter');
 
-          const photoCount = (month.photos || []).length;
+  months.forEach((month, i) => {
+    const slot = SLOTS[i % SLOTS.length];
+    const [top, left, rotate] = slot;
+    const exif = EXIF[i % EXIF.length];
 
-          a.innerHTML = `
-            <div class="card-inner">
-              ${month.cover
-                ? `<img class="card-photo" src="${month.cover}" alt="${month.label}" loading="lazy">`
-                : `<div class="card-placeholder"><span>no photo yet</span></div>`
-              }
-              <div class="card-vignette"></div>
-              <div class="card-meta">
-                <span>${exif}</span>
-                <span>${photoCount} frame${photoCount !== 1 ? 's' : ''}</span>
-              </div>
-              <span class="card-label">${month.label}</span>
-            </div>
-          `;
+    const a = document.createElement('a');
+    a.className = 'month-card';
+    a.href = `month.html?month=${month.id}`;
+    a.style.top = `${top}%`;
+    a.style.left = `${left}%`;
+    a.style.setProperty('--base-transform', `rotate(${rotate}deg)`);
+    a.style.transform = `rotate(${rotate}deg)`;
 
-          scatter.appendChild(a);
+    a.innerHTML = `
+      <div class="card-inner">
+        ${month.coverBase64
+          ? `<img class="card-photo" src="${month.coverBase64}" alt="${month.label}">`
+          : `<div class="card-placeholder"><span>no photo yet</span></div>`
+        }
+        <div class="card-vignette"></div>
+        <div class="card-meta">
+          <span>${exif}</span>
+        </div>
+        <span class="card-label">${month.label}</span>
+      </div>
+    `;
 
-          // fade in with stagger
-          setTimeout(() => a.classList.add('visible'), 80 + i * 120);
-        });
-      })
-      .catch(() => {
-        // if fetch fails (e.g. opened as file://), show a hint
-        document.getElementById('mood-text').textContent = '–';
-      });
+    scatter.appendChild(a);
+    setTimeout(() => a.classList.add('visible'), 80 + i * 120);
+  });
+});
+
+    
   </script>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js">
 </body>
 </html>
