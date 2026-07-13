@@ -677,11 +677,10 @@
         </div>`;
       }).join('');
 
-      // event delegation — works regardless of how HTML is injected
-      grid.onclick = e => {
-        const card = e.target.closest('.plant-card');
-        if (card && card.dataset.id) openDetail(card.dataset.id);
-      };
+      // attach click to each card individually
+      grid.querySelectorAll('.plant-card').forEach(card => {
+        card.addEventListener('click', () => openDetail(card.dataset.id));
+      });
     }
 
     // ── Detail ──
