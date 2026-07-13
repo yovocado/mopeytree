@@ -9,7 +9,6 @@
   <style>
     :root {
       --bg: #edeae2;
-      --paper: #f5f2ea;
       --text: #1c1810;
       --muted: #8c8679;
       --faint: #b8b3a8;
@@ -35,228 +34,596 @@
       z-index: 9999;
     }
 
+    /* ── LAYOUT ── */
+    .page {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 28px 120px;
+    }
+
     /* ── HEADER ── */
     .page-header {
-      padding: 48px 48px 0;
+      padding-top: 48px;
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      gap: 24px;
+      gap: 16px;
+      margin-bottom: 32px;
     }
 
     .back {
       font-family: 'Space Mono', monospace;
-      font-size: 0.58rem;
+      font-size: 0.52rem;
       color: var(--faint);
       letter-spacing: 0.14em;
       text-decoration: none;
       text-transform: uppercase;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
       padding-top: 6px;
       transition: color 0.2s;
+      white-space: nowrap;
     }
+    .back::before { content: '← '; }
     .back:hover { color: var(--muted); }
-    .back::before { content: '←'; font-size: 0.7rem; }
+
+    .header-center { flex: 1; }
 
     .month-title {
       font-family: 'EB Garamond', serif;
-      font-size: clamp(1.6rem, 4vw, 2.6rem);
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
       font-weight: 400;
       font-style: italic;
       letter-spacing: 0.02em;
-      color: var(--text);
     }
 
-    .month-meta {
+    .month-id {
       font-family: 'Space Mono', monospace;
-      font-size: 0.52rem;
+      font-size: 0.46rem;
       color: var(--faint);
-      letter-spacing: 0.1em;
-      margin-top: 6px;
+      letter-spacing: 0.12em;
+      margin-top: 4px;
     }
+
+    .edit-toggle {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.46rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: none;
+      border: 1px solid var(--faint);
+      color: var(--muted);
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+    .edit-toggle:hover { border-color: var(--muted); color: var(--text); }
+    .edit-toggle.active { background: var(--text); color: var(--card); border-color: var(--text); }
 
     /* ── NOTE ── */
-    .month-note {
-      padding: 28px 48px 0;
-      max-width: 520px;
+    .note-section { margin-bottom: 36px; }
+
+    .note-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.42rem;
+      color: var(--faint);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .note-text {
       font-size: 1rem;
       font-style: italic;
       color: var(--muted);
-      line-height: 1.9;
+      line-height: 1.95;
     }
 
-    .month-note:empty { display: none; }
+    .note-edit-wrap { display: none; }
+
+    .note-textarea {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--faint);
+      color: var(--text);
+      font-family: 'EB Garamond', serif;
+      font-size: 1rem;
+      font-style: italic;
+      padding: 10px 12px;
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.9;
+      outline: none;
+    }
+    .note-textarea:focus { border-color: var(--muted); }
+
+    .note-save-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.44rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: var(--text);
+      color: var(--card);
+      border: none;
+      padding: 6px 14px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
 
     /* ── DIVIDER ── */
-    .section-divider {
+    .divider {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 36px 48px 0;
+      gap: 14px;
+      margin-bottom: 32px;
     }
-
-    .section-divider::after {
+    .divider::after {
       content: '';
       flex: 1;
       height: 1px;
       background: var(--faint);
-      opacity: 0.4;
+      opacity: 0.35;
     }
-
-    .section-divider span {
+    .divider span {
       font-family: 'Space Mono', monospace;
-      font-size: 0.48rem;
+      font-size: 0.42rem;
       color: var(--faint);
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      white-space: nowrap;
     }
 
-    /* ── PHOTO GRID ── */
-    .photo-grid {
-      padding: 28px 48px 80px;
-      columns: 3;
-      column-gap: 16px;
-    }
-
-    @media (max-width: 720px) {
-      .photo-grid { columns: 2; padding: 20px 20px 60px; }
-      .page-header { padding: 32px 20px 0; }
-      .month-note { padding: 20px 20px 0; }
-      .section-divider { padding: 28px 20px 0; }
-    }
-
-    @media (max-width: 420px) {
-      .photo-grid { columns: 1; }
-    }
+    /* ── PHOTO LIST ── */
+    .photo-list { display: flex; flex-direction: column; gap: 48px; }
 
     .photo-item {
-      break-inside: avoid;
-      margin-bottom: 16px;
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(12px);
       transition: opacity 0.5s ease, transform 0.5s ease;
     }
+    .photo-item.visible { opacity: 1; transform: translateY(0); }
 
-    .photo-item.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    .photo-frame { position: relative; }
 
-    .photo-item img {
+    .photo-frame img {
       width: 100%;
       display: block;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      box-shadow: 0 2px 14px rgba(0,0,0,0.09);
+    }
+
+    .photo-frame::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      box-shadow: inset 0 0 24px rgba(0,0,0,0.08);
+      pointer-events: none;
+    }
+
+    /* delete button on photo */
+    .photo-delete-btn {
+      position: absolute;
+      top: 10px; right: 10px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.42rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(250,248,243,0.92);
+      border: 1px solid #d4a090;
+      color: #a0432a;
+      padding: 4px 9px;
+      cursor: pointer;
+      display: none;
+      z-index: 2;
+    }
+
+    /* caption */
+    .photo-caption-wrap {
+      border-left: 1px solid var(--faint);
+      padding-left: 14px;
+      margin-top: 14px;
     }
 
     .photo-caption {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.48rem;
-      color: var(--faint);
-      letter-spacing: 0.08em;
-      margin-top: 6px;
-      line-height: 1.6;
+      font-size: 0.95rem;
+      font-style: italic;
+      color: var(--muted);
+      line-height: 1.85;
     }
 
-    /* empty state */
-    .empty-state {
-      padding: 80px 48px;
+    .caption-input {
+      width: 100%;
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--faint);
+      color: var(--text);
+      font-family: 'EB Garamond', serif;
+      font-size: 0.95rem;
+      font-style: italic;
+      padding: 4px 0;
+      outline: none;
+      line-height: 1.85;
+      display: none;
+    }
+    .caption-input:focus { border-bottom-color: var(--muted); }
+
+    /* ── ADD PHOTO ── */
+    .add-photo-wrap {
+      display: none;
+      margin-top: 8px;
+    }
+
+    .add-photo-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.46rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: none;
+      border: 1px dashed var(--faint);
+      color: var(--muted);
+      padding: 16px;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    .add-photo-btn:hover { border-color: var(--muted); color: var(--text); }
+
+    #photo-file-input { display: none; }
+
+    /* uploading indicator */
+    .uploading {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.44rem;
+      color: var(--faint);
+      letter-spacing: 0.1em;
+      text-align: center;
+      padding: 12px;
+      display: none;
+    }
+
+    /* ── CREATE MONTH ── */
+    .create-wrap {
+      padding-top: 48px;
+      display: none;
+    }
+
+    .create-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.44rem;
+      color: var(--faint);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .create-input, .create-textarea {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--faint);
+      color: var(--text);
+      font-family: 'EB Garamond', serif;
+      font-size: 1rem;
+      padding: 8px 12px;
+      outline: none;
+      margin-bottom: 14px;
+    }
+    .create-textarea { resize: vertical; min-height: 70px; font-style: italic; }
+
+    .create-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.46rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: var(--text);
+      color: var(--card);
+      border: none;
+      padding: 9px 20px;
+      cursor: pointer;
+    }
+
+    /* ── LOADING / EMPTY ── */
+    .state-msg {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.46rem;
+      color: var(--faint);
+      letter-spacing: 0.1em;
+      padding: 48px 0;
       text-align: center;
     }
 
-    .empty-state p {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.55rem;
-      color: var(--faint);
-      letter-spacing: 0.1em;
+    /* ── MOBILE ── */
+    @media (max-width: 500px) {
+      .page { padding: 0 18px 100px; }
+      .page-header { padding-top: 32px; }
     }
-
-    /* site name fixed */
-    .site-link {
-      position: fixed;
-      bottom: 24px;
-      left: 28px;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.48rem;
-      color: var(--faint);
-      letter-spacing: 0.14em;
-      text-decoration: none;
-      text-transform: lowercase;
-      transition: color 0.2s;
-    }
-    .site-link:hover { color: var(--muted); }
   </style>
 </head>
 <body>
+<div class="page">
 
-  <header class="page-header">
+  <!-- Header -->
+  <header class="page-header" id="page-header" style="display:none">
     <a href="index.html" class="back">mopeytree</a>
-    <div>
-      <h1 class="month-title" id="month-title">—</h1>
-      <p class="month-meta" id="month-meta"></p>
+    <div class="header-center">
+      <h1 class="month-title" id="month-title"></h1>
+      <p class="month-id" id="month-id-el"></p>
     </div>
+    <button class="edit-toggle" id="edit-toggle" onclick="toggleEdit()">编辑</button>
   </header>
 
-  <p class="month-note" id="month-note"></p>
+  <!-- Note / mood -->
+  <div class="note-section" id="note-section" style="display:none">
+    <div class="note-label">this month</div>
+    <p class="note-text" id="note-text"></p>
+    <div class="note-edit-wrap" id="note-edit-wrap">
+      <textarea class="note-textarea" id="note-textarea" placeholder="写下这个月的心情…"></textarea>
+      <button class="note-save-btn" onclick="saveNote()">保存心情</button>
+    </div>
+  </div>
 
-  <div class="section-divider"><span id="frame-count"></span></div>
+  <!-- Divider -->
+  <div class="divider" id="divider" style="display:none">
+    <span id="frame-count"></span>
+  </div>
 
-  <div class="photo-grid" id="photo-grid"></div>
+  <!-- Photo list -->
+  <div class="photo-list" id="photo-list"></div>
 
-  <a href="index.html" class="site-link">← back</a>
+  <!-- Add photo button (edit mode) -->
+  <div class="add-photo-wrap" id="add-photo-wrap">
+    <div class="uploading" id="uploading-msg">uploading...</div>
+    <button class="add-photo-btn" onclick="triggerUpload()">+ 添加照片</button>
+    <input type="file" id="photo-file-input" accept="image/*" multiple onchange="handleUpload(event)">
+  </div>
 
-  <script>
-    const params = new URLSearchParams(location.search);
-    const monthId = params.get('month');
+  <!-- Loading -->
+  <div class="state-msg" id="state-msg">loading...</div>
 
-    fetch('data.json')
-      .then(r => r.json())
-      .then(data => {
-        const month = (data.months || []).find(m => m.id === monthId);
-        if (!month) {
-          document.getElementById('month-title').textContent = 'not found';
-          return;
-        }
+  <!-- Create month (if not exists) -->
+  <div class="create-wrap" id="create-wrap">
+    <div class="page-header" style="display:flex; padding-top:0; margin-bottom:24px">
+      <a href="index.html" class="back">mopeytree</a>
+    </div>
+    <div class="note-label" style="margin-bottom:6px">新建月份</div>
+    <p style="font-size:0.9rem; color:var(--muted); margin-bottom:20px; font-style:italic">
+      这个月份还没有内容，先写几个字吧。
+    </p>
+    <label class="create-label">月份标题（如 Jul. 2026）</label>
+    <input class="create-input" type="text" id="create-title-input" placeholder="Jul. 2026">
+    <label class="create-label">这个月的心情（可以之后再写）</label>
+    <textarea class="create-textarea" id="create-note-input" placeholder="写几句话也好…"></textarea>
+    <button class="create-btn" onclick="createMonth()">创建这个月</button>
+  </div>
 
-        document.title = `${month.label} — mopeytree`;
-        document.getElementById('month-title').textContent = month.label;
-        document.getElementById('month-note').textContent = month.note || '';
+</div>
 
-        const photos = month.photos || [];
-        const countEl = document.getElementById('frame-count');
-        countEl.textContent = `${photos.length} frame${photos.length !== 1 ? 's' : ''}`;
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+  firebase.initializeApp({
+    apiKey: "AIzaSyDyoFHUE1Tr6t1gXAU4qL3qi0lNls5ItQU",
+    authDomain: "mopeytree.firebaseapp.com",
+    projectId: "mopeytree",
+    storageBucket: "mopeytree.firebasestorage.app",
+    messagingSenderId: "743700580569",
+    appId: "1:743700580569:web:62585c863c5a5c986296c8"
+  });
+  const db = firebase.firestore();
+  const monthsRef     = db.collection('months');
+  const photosRef     = db.collection('monthPhotos');
 
-        // month meta: derive year-month display
-        document.getElementById('month-meta').textContent = month.id || '';
+  const monthId = new URLSearchParams(location.search).get('month') || '';
+  let isEditMode = false;
+  let monthData  = null;
+  let photos     = [];
 
-        const grid = document.getElementById('photo-grid');
+  // ── compress image ──
+  function compress(file, maxW = 1200, q = 0.78) {
+    return new Promise(resolve => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const scale  = Math.min(1, maxW / Math.max(img.width, img.height));
+        const w = Math.round(img.width  * scale);
+        const h = Math.round(img.height * scale);
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/jpeg', q));
+      };
+      img.src = url;
+    });
+  }
 
-        if (photos.length === 0) {
-          grid.innerHTML = '';
-          const empty = document.createElement('div');
-          empty.className = 'empty-state';
-          empty.innerHTML = `<p>photos coming soon.</p>`;
-          grid.parentNode.insertBefore(empty, grid);
-          return;
-        }
+  // ── load ──
+  async function init() {
+    if (!monthId) { show('state-msg', '缺少月份参数'); return; }
 
-        photos.forEach((photo, i) => {
-          const item = document.createElement('div');
-          item.className = 'photo-item';
+    const doc = await monthsRef.doc(monthId).get();
 
-          item.innerHTML = `
-            <img src="${photo.file}" alt="${photo.caption || ''}" loading="lazy">
-            ${photo.caption ? `<p class="photo-caption">${photo.caption}</p>` : ''}
-          `;
+    if (!doc.exists) {
+      hide('state-msg');
+      // pre-fill title guess from id e.g. "2026-07"
+      const [y, m] = monthId.split('-');
+      const names  = ['','Jan.','Feb.','Mar.','Apr.','May','Jun.','Jul.','Aug.','Sep.','Oct.','Nov.','Dec.'];
+      document.getElementById('create-title-input').value = `${names[+m] || m} ${y}`;
+      show('create-wrap');
+      return;
+    }
 
-          grid.appendChild(item);
+    monthData = doc.data();
+    await loadPhotos();
+    render();
+  }
 
-          setTimeout(() => item.classList.add('visible'), 60 + i * 80);
-        });
+  async function loadPhotos() {
+    const snap = await photosRef.where('monthId', '==', monthId).get();
+    photos = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || (a.createdAt?.seconds ?? 0) - (b.createdAt?.seconds ?? 0));
+  }
+
+  // ── render ──
+  function render() {
+    hide('state-msg');
+
+    document.title = `${monthData.label || monthId} — mopeytree`;
+    document.getElementById('month-title').textContent = monthData.label || monthId;
+    document.getElementById('month-id-el').textContent = monthId;
+    show('page-header');
+
+    // note
+    const noteText = monthData.note || '';
+    document.getElementById('note-text').textContent     = noteText;
+    document.getElementById('note-textarea').value       = noteText;
+    document.getElementById('note-section').style.display = 'block';
+
+    // frame count
+    document.getElementById('frame-count').textContent =
+      `${photos.length} frame${photos.length !== 1 ? 's' : ''}`;
+    show('divider');
+
+    renderPhotos();
+  }
+
+  function renderPhotos() {
+    const list = document.getElementById('photo-list');
+    list.innerHTML = '';
+
+    photos.forEach((p, i) => {
+      const item = document.createElement('div');
+      item.className = 'photo-item';
+      item.dataset.id = p.id;
+
+      item.innerHTML = `
+        <div class="photo-frame">
+          <img src="${p.base64}" alt="${p.caption || ''}" loading="lazy">
+          <button class="photo-delete-btn" onclick="deletePhoto('${p.id}')">删除</button>
+        </div>
+        <div class="photo-caption-wrap">
+          <p class="photo-caption">${p.caption || ''}</p>
+          <input class="caption-input" type="text" value="${(p.caption || '').replace(/"/g,'&quot;')}"
+            placeholder="写几句话…"
+            onblur="saveCaption('${p.id}', this.value)"
+            onkeydown="if(event.key==='Enter'){this.blur()}">
+        </div>
+      `;
+
+      list.appendChild(item);
+      setTimeout(() => item.classList.add('visible'), 60 + i * 80);
+    });
+
+    applyEditMode();
+  }
+
+  // ── edit mode ──
+  function toggleEdit() {
+    isEditMode = !isEditMode;
+    const btn = document.getElementById('edit-toggle');
+    btn.textContent = isEditMode ? '完成' : '编辑';
+    btn.classList.toggle('active', isEditMode);
+    applyEditMode();
+  }
+
+  function applyEditMode() {
+    // note
+    document.getElementById('note-text').style.display      = isEditMode ? 'none' : 'block';
+    document.getElementById('note-edit-wrap').style.display = isEditMode ? 'block' : 'none';
+
+    // photos
+    document.querySelectorAll('.photo-delete-btn').forEach(b => b.style.display = isEditMode ? 'block' : 'none');
+    document.querySelectorAll('.photo-caption').forEach(p  => p.style.display   = isEditMode ? 'none' : 'block');
+    document.querySelectorAll('.caption-input').forEach(inp => inp.style.display = isEditMode ? 'block' : 'none');
+
+    // add button
+    document.getElementById('add-photo-wrap').style.display = isEditMode ? 'block' : 'none';
+  }
+
+  // ── note ──
+  async function saveNote() {
+    const val = document.getElementById('note-textarea').value.trim();
+    await monthsRef.doc(monthId).update({ note: val });
+    monthData.note = val;
+    document.getElementById('note-text').textContent = val;
+  }
+
+  // ── caption ──
+  async function saveCaption(photoId, val) {
+    const trimmed = val.trim();
+    await photosRef.doc(photoId).update({ caption: trimmed });
+    // update local
+    const p = photos.find(x => x.id === photoId);
+    if (p) p.caption = trimmed;
+    // update visible text
+    const item = document.querySelector(`.photo-item[data-id="${photoId}"]`);
+    if (item) item.querySelector('.photo-caption').textContent = trimmed;
+  }
+
+  // ── upload ──
+  function triggerUpload() {
+    document.getElementById('photo-file-input').click();
+  }
+
+  async function handleUpload(e) {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    const uploadingEl = document.getElementById('uploading-msg');
+    uploadingEl.style.display = 'block';
+
+    for (let i = 0; i < files.length; i++) {
+      uploadingEl.textContent = `uploading ${i + 1} / ${files.length}…`;
+      const base64 = await compress(files[i]);
+      await photosRef.add({
+        monthId,
+        base64,
+        caption: '',
+        order: photos.length + i,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-  </script>
+    }
 
+    uploadingEl.style.display = 'none';
+    e.target.value = '';
+    await loadPhotos();
+    renderPhotos();
+
+    // update frame count
+    document.getElementById('frame-count').textContent =
+      `${photos.length} frame${photos.length !== 1 ? 's' : ''}`;
+  }
+
+  // ── delete ──
+  async function deletePhoto(photoId) {
+    if (!confirm('删除这张照片？')) return;
+    await photosRef.doc(photoId).delete();
+    photos = photos.filter(p => p.id !== photoId);
+    const item = document.querySelector(`.photo-item[data-id="${photoId}"]`);
+    if (item) item.remove();
+    document.getElementById('frame-count').textContent =
+      `${photos.length} frame${photos.length !== 1 ? 's' : ''}`;
+  }
+
+  // ── create month ──
+  async function createMonth() {
+    const label = document.getElementById('create-title-input').value.trim() || monthId;
+    const note  = document.getElementById('create-note-input').value.trim();
+    await monthsRef.doc(monthId).set({
+      label, note,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    hide('create-wrap');
+    monthData = { label, note };
+    photos    = [];
+    render();
+  }
+
+  // ── utils ──
+  function show(id) { document.getElementById(id).style.display = 'block'; }
+  function hide(id) { document.getElementById(id).style.display = 'none';  }
+
+  init();
+</script>
 </body>
 </html>
