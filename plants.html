@@ -666,7 +666,7 @@
         const photo = p.photoBase64
           ? `<img class="card-photo" src="${p.photoBase64}" alt="${p.name}">`
           : `<div class="card-photo-placeholder"><span>no photo</span></div>`;
-        return `<div class="plant-card ${s.cls}" onclick="openDetail('${p.id}')">
+        return `<div class="plant-card ${s.cls}" data-id="${p.id}">
           ${photo}
           <div class="card-body">
             <div class="card-name">${p.name}</div>
@@ -676,6 +676,12 @@
           </div>
         </div>`;
       }).join('');
+
+      // event delegation — works regardless of how HTML is injected
+      grid.onclick = e => {
+        const card = e.target.closest('.plant-card');
+        if (card && card.dataset.id) openDetail(card.dataset.id);
+      };
     }
 
     // ── Detail ──
