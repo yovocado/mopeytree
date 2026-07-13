@@ -726,22 +726,20 @@
     async function loadLogs(plantId) {
       const snap = await logsRef
         .where('plantId', '==', plantId)
-        .orderBy('createdAt', 'desc')
-        .limit(30)
         .get();
       const el = document.getElementById('detail-logs');
-      el.innerHTML = snap.empty
+      const logs = snap.docs
+        .map(d => d.data())
+        .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      el.innerHTML = logs.length === 0
         ? `<p class="empty">暂无记录</p>`
-        : snap.docs.map(d => {
-            const l = d.data();
-            return `<div class="log-item">
-              <div class="log-date">${l.date || ''}</div>
-              <div>
-                <div class="log-action">${ACTION_MAP[l.action] || l.action}</div>
-                ${l.notes ? `<div class="log-notes-text">${l.notes}</div>` : ''}
-              </div>
-            </div>`;
-          }).join('');
+        : logs.map(l => `<div class="log-item">
+            <div class="log-date">${l.date || ''}</div>
+            <div>
+              <div class="log-action">${ACTION_MAP[l.action] || l.action}</div>
+              ${l.notes ? `<div class="log-notes-text">${l.notes}</div>` : ''}
+            </div>
+          </div>`).join('');
     }
 
     function closeDetail() {
