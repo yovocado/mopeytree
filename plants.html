@@ -156,7 +156,7 @@
 
     .card-group {
       font-family: 'Space Mono', monospace;
-      font-size: 0.5rem;
+      font-size: 0.4rem;
       color: var(--faint);
       letter-spacing: 0.1em;
       margin-bottom: 6px;
@@ -200,11 +200,11 @@
 
     .modal-close {
       position: absolute;
-      top: 21px; right: 21px;
+      top: 14px; right: 14px;
       background: none;
       border: none;
-      font-family: 'EB Garamond', serif;
-      font-size: 1.8rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.48rem;
       color: var(--faint);
       cursor: pointer;
       letter-spacing: 0.1em;
@@ -458,6 +458,99 @@
 
     .bottom-spacer { height: 80px; }
 
+    /* ── GROWTH RECORD ── */
+    .growth-section {
+      border-top: 1px solid rgba(0,0,0,0.07);
+      padding-top: 16px;
+      margin-bottom: 16px;
+    }
+
+    .growth-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .growth-thumb {
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .growth-thumb::before {
+      content: '';
+      display: block;
+      padding-top: 100%;
+    }
+    .growth-thumb img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: opacity 0.2s;
+    }
+    .growth-thumb:hover img { opacity: 0.85; }
+
+    .growth-date {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.32rem;
+      color: var(--faint);
+      letter-spacing: 0.04em;
+      margin-top: 3px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .growth-upload-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.42rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: none;
+      border: 1px dashed var(--faint);
+      color: var(--muted);
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .growth-upload-btn:hover { border-color: var(--muted); color: var(--text); }
+
+    #growth-file-input { display: none; }
+
+    /* ── LIGHTBOX ── */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(20,18,12,0.88);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .lightbox.open { display: flex; }
+
+    .lightbox img {
+      max-width: 100%;
+      max-height: 90vh;
+      object-fit: contain;
+      box-shadow: 0 4px 40px rgba(0,0,0,0.4);
+    }
+
+    .lightbox-close {
+      position: fixed;
+      top: 16px; right: 20px;
+      background: none;
+      border: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.52rem;
+      color: rgba(255,255,255,0.6);
+      cursor: pointer;
+      letter-spacing: 0.1em;
+    }
+    .lightbox-close:hover { color: #fff; }
+
     /* ── MOBILE ── */
     @media (max-width: 600px) {
       .page-header { padding: 24px 20px 0; }
@@ -499,10 +592,10 @@
 
       <div class="detail-photo-wrap" id="detail-photo-wrap">
         <div class="detail-photo-placeholder" onclick="triggerPhotoUpload()" id="detail-photo-placeholder">
-          <span>写真。載せて</span>
+          <span>点击上传照片</span>
         </div>
         <img class="detail-photo" id="detail-photo-img" src="" alt="" style="display:none">
-        <button class="photo-upload-btn" onclick="triggerPhotoUpload()" id="photo-change-btn" style="display:none">更新</button>
+        <button class="photo-upload-btn" onclick="triggerPhotoUpload()" id="photo-change-btn" style="display:none">更换照片</button>
       </div>
       <input type="file" id="photo-file-input" accept="image/*" onchange="handlePhotoUpload(event)">
 
@@ -521,6 +614,13 @@
         <div class="detail-actions">
           <button class="btn btn-ghost" onclick="openEditFromDetail()">编辑信息</button>
           <button class="btn btn-danger" onclick="confirmDeleteFromDetail()">删除植物</button>
+        </div>
+
+        <div class="growth-section">
+          <div class="log-label">成长记录</div>
+          <div class="growth-grid" id="growth-grid"></div>
+          <button class="growth-upload-btn" onclick="triggerGrowthUpload()">+ 添加照片</button>
+          <input type="file" id="growth-file-input" accept="image/*" onchange="handleGrowthUpload(event)">
         </div>
 
         <div class="log-section">
@@ -592,6 +692,12 @@
     </div>
   </div>
 
+  <!-- ── LIGHTBOX ── -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕ 关闭</button>
+    <img id="lightbox-img" src="" alt="">
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script>
@@ -604,8 +710,9 @@
       appId: "1:743700580569:web:62585c863c5a5c986296c8"
     });
     const db = firebase.firestore();
-    const plantsRef = db.collection('plants');
-    const logsRef   = db.collection('logs');
+    const plantsRef  = db.collection('plants');
+    const logsRef    = db.collection('logs');
+    const growthRef  = db.collection('growthPhotos');
 
     let plants = [];
     let editId   = null;
@@ -719,6 +826,7 @@
       notesEl.textContent = p.notes || '';
       notesEl.style.display = p.notes ? 'block' : 'none';
 
+      await loadGrowthPhotos(plantId);
       await loadLogs(plantId);
       document.getElementById('detail-modal').classList.add('open');
     }
@@ -768,6 +876,67 @@
         await loadPlants();
       }
       await loadLogs(detailId);
+    }
+
+    // ── Growth photos ──
+    function formatGrowthDate(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      const days = ['日','一','二','三','四','五','六'];
+      return `${dateStr.replace(/-/g,'.')} 周${days[d.getDay()]}`;
+    }
+
+    async function loadGrowthPhotos(plantId) {
+      const snap = await growthRef.where('plantId', '==', plantId).get();
+      const photos = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      const grid = document.getElementById('growth-grid');
+      if (!photos.length) {
+        grid.innerHTML = `<p class="empty" style="grid-column:1/-1;font-size:0.4rem">还没有成长照片</p>`;
+        return;
+      }
+      grid.innerHTML = photos.map(p => `
+        <div>
+          <div class="growth-thumb" onclick="openLightbox('${p.id}')">
+            <img src="${p.base64}" alt="${p.date}">
+          </div>
+          <div class="growth-date">${formatGrowthDate(p.date)}</div>
+        </div>
+      `).join('');
+      // store photos for lightbox lookup
+      grid._photos = photos;
+    }
+
+    function triggerGrowthUpload() {
+      document.getElementById('growth-file-input').click();
+    }
+
+    async function handleGrowthUpload(e) {
+      const file = e.target.files[0];
+      if (!file || !detailId) return;
+      const base64 = await compressImage(file, 1200, 0.78);
+      await growthRef.add({
+        plantId: detailId,
+        base64,
+        date: todayStr(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      e.target.value = '';
+      await loadGrowthPhotos(detailId);
+    }
+
+    function openLightbox(photoId) {
+      const grid = document.getElementById('growth-grid');
+      const photos = grid._photos || [];
+      const p = photos.find(x => x.id === photoId);
+      if (!p) return;
+      document.getElementById('lightbox-img').src = p.base64;
+      document.getElementById('lightbox').classList.add('open');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+      document.getElementById('lightbox-img').src = '';
     }
 
     // ── Photo upload ──
