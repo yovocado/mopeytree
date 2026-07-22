@@ -898,7 +898,7 @@
       grid.innerHTML = photos.map(p => `
         <div>
           <div class="growth-thumb" onclick="openLightbox('${p.id}')">
-            <img src="${p.base64}" alt="${p.date}">
+            <img src="${p.thumbBase64 || p.base64}" alt="${p.date}">
           </div>
           <div class="growth-date">${formatGrowthDate(p.date)}</div>
         </div>
@@ -914,10 +914,14 @@
     async function handleGrowthUpload(e) {
       const file = e.target.files[0];
       if (!file || !detailId) return;
-      const base64 = await compressImage(file, 1200, 0.78);
+      const [base64, thumbBase64] = await Promise.all([
+        compressImage(file, 1200, 0.78),
+        compressImage(file, 200,  0.55),
+      ]);
       await growthRef.add({
         plantId: detailId,
         base64,
+        thumbBase64,
         date: todayStr(),
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
