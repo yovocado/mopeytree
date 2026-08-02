@@ -173,50 +173,52 @@
       text-transform: uppercase;
     }
 
-    /* ── PHOTO LIST ── */
-    .photo-list { display: flex; flex-direction: column; gap: 44px; }
-
-    /* 每行：照片 + caption 横排 */
-    .photo-item {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
+    /* ── PHOTO GRID (错位拼格) ── */
+    .photo-grid {
+      --unit: calc((min(100vw, 680px) - 56px - 6px) / 3);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: var(--unit);
+      gap: 3px;
+      margin-bottom: 60px;
     }
-    .photo-item.visible { opacity: 1; transform: translateY(0); }
+    @media (max-width: 500px) {
+      .photo-grid { --unit: calc((100vw - 36px - 6px) / 3); }
+    }
 
-    /* 奇数行：照片左，caption 右；偶数行反转 */
-    .photo-item.even { flex-direction: row-reverse; }
-
-    .photo-frame {
+    .photo-cell {
+      overflow: hidden;
       position: relative;
-      flex-shrink: 0;
-      width: 160px;
+      cursor: pointer;
+      background: #d4cfc6;
     }
-
-    .photo-frame img {
-      width: 160px;
+    .photo-cell img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       display: block;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+      transition: opacity 0.2s;
     }
+    .photo-cell:hover img { opacity: 0.88; }
 
-    .photo-frame::after {
-      content: '';
+    .cell-num {
       position: absolute;
-      inset: 0;
-      box-shadow: inset 0 0 16px rgba(0,0,0,0.07);
+      bottom: 6px; left: 8px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.38rem;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.45);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.55);
       pointer-events: none;
     }
 
-    /* 删除按钮 */
+    /* 删除 / 封面按钮（编辑模式） */
     .photo-delete-btn {
       position: absolute;
       top: 6px; right: 6px;
       font-family: 'Space Mono', monospace;
-      font-size: 0.38rem;
-      letter-spacing: 0.08em;
+      font-size: 0.36rem;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       background: rgba(250,248,243,0.92);
       border: 1px solid #d4a090;
@@ -226,13 +228,11 @@
       display: none;
       z-index: 2;
     }
-
-    /* 封面按钮 */
     .photo-cover-btn {
       position: absolute;
       bottom: 6px; right: 6px;
       font-family: 'Space Mono', monospace;
-      font-size: 0.38rem;
+      font-size: 0.36rem;
       background: rgba(250,248,243,0.92);
       border: 1px solid var(--faint);
       color: var(--muted);
@@ -242,73 +242,97 @@
       z-index: 2;
     }
 
-    /* caption 侧 */
-    .photo-side {
-      flex: 1;
-      display: flex;
+    /* ── LIGHTBOX ── */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,8,4,0.93);
+      z-index: 200;
+      display: none;
       flex-direction: column;
-      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
     }
+    .lightbox.open { display: flex; }
 
-    .frame-num {
+    .lb-close {
+      position: absolute;
+      top: 18px; right: 22px;
       font-family: 'Space Mono', monospace;
-      font-size: 0.38rem;
-      color: var(--faint);
-      letter-spacing: 0.16em;
-    }
-
-    .photo-caption-wrap {
-      border-left: 1px solid var(--faint);
-      padding-left: 12px;
-    }
-
-    /* 偶数行 caption 在左，边线翻到右侧 */
-    .photo-item.even .photo-caption-wrap {
-      border-left: none;
-      border-right: 1px solid var(--faint);
-      padding-left: 0;
-      padding-right: 12px;
-      text-align: right;
-    }
-    .photo-item.even .frame-num { text-align: right; }
-
-    .photo-caption {
-      font-size: 0.88rem;
-      font-style: italic;
-      color: var(--muted);
-      line-height: 1.9;
-    }
-
-    .caption-input {
-      width: 100%;
+      font-size: 0.42rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.28);
       background: none;
       border: none;
-      border-bottom: 1px solid var(--faint);
-      color: var(--text);
-      font-family: 'EB Garamond', serif;
-      font-size: 0.88rem;
+      cursor: pointer;
+      padding: 6px;
+    }
+    .lb-close:hover { color: rgba(255,255,255,0.55); }
+
+    .lb-img {
+      max-width: 100%;
+      max-height: 58vh;
+      object-fit: contain;
+      display: block;
+    }
+
+    .lb-body {
+      text-align: center;
+      padding-top: 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .lb-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.4rem;
+      letter-spacing: 0.16em;
+      color: rgba(255,255,255,0.2);
+      margin-bottom: 12px;
+    }
+
+    .lb-caption {
+      font-size: 1rem;
       font-style: italic;
-      padding: 4px 0;
+      color: rgba(235,226,210,0.8);
+      line-height: 2;
+      max-width: 420px;
+    }
+    .lb-caption:empty::before {
+      content: '— 没有文字 —';
+      color: rgba(255,255,255,0.15);
+      font-size: 0.8rem;
+    }
+
+    .lb-caption-input {
+      background: none;
+      border: none;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      color: rgba(235,226,210,0.88);
+      font-family: 'EB Garamond', serif;
+      font-size: 1rem;
+      font-style: italic;
+      text-align: center;
+      width: 340px;
+      max-width: calc(100vw - 56px);
+      padding: 6px 0;
       outline: none;
       line-height: 1.9;
       display: none;
     }
-    .caption-input:focus { border-bottom-color: var(--muted); }
+    .lb-caption-input::placeholder { color: rgba(255,255,255,0.18); }
+    .lb-caption-input:focus { border-bottom-color: rgba(255,255,255,0.4); }
 
-    /* 手机：恢复单列 */
-    @media (max-width: 500px) {
-      .photo-item,
-      .photo-item.even { flex-direction: column; align-items: flex-start; }
-      .photo-frame,
-      .photo-frame img { width: 100%; }
-      .photo-item.even .photo-caption-wrap {
-        border-right: none;
-        border-left: 1px solid var(--faint);
-        padding-right: 0;
-        padding-left: 12px;
-        text-align: left;
-      }
-      .photo-item.even .frame-num { text-align: left; }
+    .lb-hint {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.36rem;
+      letter-spacing: 0.14em;
+      color: rgba(255,255,255,0.14);
+      margin-top: 22px;
     }
 
     /* ── ADD PHOTO ── */
@@ -431,8 +455,8 @@
     <span id="frame-count"></span>
   </div>
 
-  <!-- Photo list -->
-  <div class="photo-list" id="photo-list"></div>
+  <!-- Photo grid -->
+  <div class="photo-grid" id="photo-grid"></div>
 
   <!-- Add photo button (edit mode) -->
   <div class="add-photo-wrap" id="add-photo-wrap">
@@ -460,6 +484,19 @@
     <button class="create-btn" onclick="createMonth()">创建这个月</button>
   </div>
 
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lb-close" onclick="event.stopPropagation();closeLightbox()">✕ close</button>
+  <img class="lb-img" id="lb-img" onclick="event.stopPropagation()" alt="">
+  <div class="lb-body" onclick="event.stopPropagation()">
+    <span class="lb-num" id="lb-num"></span>
+    <p class="lb-caption" id="lb-caption"></p>
+    <input class="lb-caption-input" id="lb-caption-input" type="text" placeholder="写几句话…"
+      onblur="saveLbCaption()" onkeydown="if(event.key==='Enter')this.blur()">
+    <span class="lb-hint">tap anywhere to close</span>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -552,39 +589,80 @@
     renderPhotos();
   }
 
+  // ── grid placement: Layout C (错位拼格), 4-photo blocks ──
+  function getGridPlacement(i) {
+    const block = Math.floor(i / 4);
+    const pos   = i % 4;
+    const r1 = block * 2 + 1;
+    const r2 = block * 2 + 2;
+    if (pos === 0) return { gridColumn: '1 / span 2', gridRow: String(r1) };
+    if (pos === 1) return { gridColumn: '3',           gridRow: String(r1) };
+    if (pos === 2) return { gridColumn: '1',           gridRow: String(r2) };
+    /*  pos === 3 */ return { gridColumn: '2 / span 2', gridRow: String(r2) };
+  }
+
   function renderPhotos() {
-    const list = document.getElementById('photo-list');
-    list.innerHTML = '';
+    const grid = document.getElementById('photo-grid');
+    grid.innerHTML = '';
 
     photos.forEach((p, i) => {
-      const item = document.createElement('div');
-      item.className = 'photo-item' + (i % 2 === 1 ? ' even' : '');
-      item.dataset.id = p.id;
-      const num = String(i + 1).padStart(2, '0');
+      const cell = document.createElement('div');
+      cell.className = 'photo-cell';
+      cell.dataset.id = p.id;
+      Object.assign(cell.style, getGridPlacement(i));
 
-      item.innerHTML = `
-        <div class="photo-frame">
-          <img src="${p.base64}" alt="${p.caption || ''}" loading="lazy">
-          <button class="photo-delete-btn" onclick="deletePhoto('${p.id}')">删除</button>
-          <button class="photo-cover-btn" onclick="setCover('${p.id}')">设为封面</button>
-        </div>
-        <div class="photo-side">
-          <span class="frame-num">${num}</span>
-          <div class="photo-caption-wrap">
-            <p class="photo-caption">${p.caption || ''}</p>
-            <input class="caption-input" type="text" value="${(p.caption || '').replace(/"/g,'&quot;')}"
-              placeholder="写几句话…"
-              onblur="saveCaption('${p.id}', this.value)"
-              onkeydown="if(event.key==='Enter'){this.blur()}">
-          </div>
-        </div>
+      cell.innerHTML = `
+        <img src="${p.thumbBase64 || p.base64}" alt="" loading="lazy">
+        <span class="cell-num">${String(i + 1).padStart(2, '0')}</span>
+        <button class="photo-delete-btn" onclick="event.stopPropagation();deletePhoto('${p.id}')">删除</button>
+        <button class="photo-cover-btn"  onclick="event.stopPropagation();setCover('${p.id}')">设为封面</button>
       `;
 
-      list.appendChild(item);
-      setTimeout(() => item.classList.add('visible'), 60 + i * 80);
+      cell.addEventListener('click', () => openLightbox(i));
+      grid.appendChild(cell);
     });
 
     applyEditMode();
+  }
+
+  // ── lightbox ──
+  let currentLbIdx = -1;
+
+  function openLightbox(idx) {
+    const p = photos[idx];
+    currentLbIdx = idx;
+    document.getElementById('lb-img').src = p.base64;
+    document.getElementById('lb-num').textContent =
+      String(idx + 1).padStart(2, '0') + ' / ' + String(photos.length).padStart(2, '0');
+
+    const capEl   = document.getElementById('lb-caption');
+    const inputEl = document.getElementById('lb-caption-input');
+
+    if (isEditMode) {
+      capEl.style.display   = 'none';
+      inputEl.style.display = 'block';
+      inputEl.value = p.caption || '';
+      setTimeout(() => inputEl.focus(), 80);
+    } else {
+      capEl.textContent     = p.caption || '';
+      capEl.style.display   = 'block';
+      inputEl.style.display = 'none';
+    }
+
+    document.getElementById('lightbox').classList.add('open');
+  }
+
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    currentLbIdx = -1;
+  }
+
+  async function saveLbCaption() {
+    if (currentLbIdx < 0) return;
+    const p       = photos[currentLbIdx];
+    const trimmed = document.getElementById('lb-caption-input').value.trim();
+    await photosRef.doc(p.id).update({ caption: trimmed });
+    p.caption = trimmed;
   }
 
   // ── edit mode ──
@@ -593,21 +671,15 @@
     const btn = document.getElementById('edit-toggle');
     btn.textContent = isEditMode ? '完成' : '编辑';
     btn.classList.toggle('active', isEditMode);
+    closeLightbox();
     applyEditMode();
   }
 
   function applyEditMode() {
-    // note
-    document.getElementById('note-text').style.display      = isEditMode ? 'none' : 'block';
+    document.getElementById('note-text').style.display      = isEditMode ? 'none'  : 'block';
     document.getElementById('note-edit-wrap').style.display = isEditMode ? 'block' : 'none';
-
-    // photos
     document.querySelectorAll('.photo-delete-btn').forEach(b => b.style.display = isEditMode ? 'block' : 'none');
-    document.querySelectorAll('.photo-cover-btn').forEach(b => b.style.display = isEditMode ? 'block' : 'none');
-    document.querySelectorAll('.photo-caption').forEach(p  => p.style.display   = isEditMode ? 'none' : 'block');
-    document.querySelectorAll('.caption-input').forEach(inp => inp.style.display = isEditMode ? 'block' : 'none');
-
-    // add button
+    document.querySelectorAll('.photo-cover-btn').forEach(b  => b.style.display = isEditMode ? 'block' : 'none');
     document.getElementById('add-photo-wrap').style.display = isEditMode ? 'block' : 'none';
   }
 
@@ -617,18 +689,6 @@
     await monthsRef.doc(monthId).update({ note: val });
     monthData.note = val;
     document.getElementById('note-text').textContent = val;
-  }
-
-  // ── caption ──
-  async function saveCaption(photoId, val) {
-    const trimmed = val.trim();
-    await photosRef.doc(photoId).update({ caption: trimmed });
-    // update local
-    const p = photos.find(x => x.id === photoId);
-    if (p) p.caption = trimmed;
-    // update visible text
-    const item = document.querySelector(`.photo-item[data-id="${photoId}"]`);
-    if (item) item.querySelector('.photo-caption').textContent = trimmed;
   }
 
   // ── upload ──
@@ -679,10 +739,9 @@
     if (!confirm('删除这张照片？')) return;
     await photosRef.doc(photoId).delete();
     photos = photos.filter(p => p.id !== photoId);
-    const item = document.querySelector(`.photo-item[data-id="${photoId}"]`);
-    if (item) item.remove();
     document.getElementById('frame-count').textContent =
       `${photos.length} frame${photos.length !== 1 ? 's' : ''}`;
+    renderPhotos();
   }
 
   // ── create month ──
