@@ -589,18 +589,6 @@
     renderPhotos();
   }
 
-  // ── grid placement: Layout C (错位拼格), 4-photo blocks ──
-  function getGridPlacement(i) {
-    const block = Math.floor(i / 4);
-    const pos   = i % 4;
-    const r1 = block * 2 + 1;
-    const r2 = block * 2 + 2;
-    if (pos === 0) return { gridColumn: '1 / span 2', gridRow: String(r1) };
-    if (pos === 1) return { gridColumn: '3',           gridRow: String(r1) };
-    if (pos === 2) return { gridColumn: '1',           gridRow: String(r2) };
-    /*  pos === 3 */ return { gridColumn: '2 / span 2', gridRow: String(r2) };
-  }
-
   function renderPhotos() {
     const grid = document.getElementById('photo-grid');
     grid.innerHTML = '';
@@ -609,7 +597,6 @@
       const cell = document.createElement('div');
       cell.className = 'photo-cell';
       cell.dataset.id = p.id;
-      Object.assign(cell.style, getGridPlacement(i));
 
       cell.innerHTML = `
         <img src="${p.thumbBase64 || p.base64}" alt="" loading="lazy">
