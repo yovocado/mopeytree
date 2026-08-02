@@ -212,25 +212,21 @@
       pointer-events: none;
     }
 
-    /* 每张照片的编辑按钮 */
-    .cell-edit-btn {
-      position: absolute;
-      top: 5px; right: 5px;
+    /* lightbox 内的编辑入口按钮 */
+    .lb-edit-btn {
       font-family: 'Space Mono', monospace;
-      font-size: 0.3rem;
-      letter-spacing: 0.06em;
+      font-size: 0.36rem;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      background: rgba(250,248,243,0.88);
-      border: 1px solid rgba(0,0,0,0.1);
-      color: var(--muted);
-      padding: 3px 7px;
+      background: none;
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.35);
+      padding: 5px 14px;
       cursor: pointer;
-      z-index: 2;
-      opacity: 0;
-      transition: opacity 0.15s;
+      margin-top: 16px;
+      transition: all 0.15s;
     }
-    .photo-cell:hover .cell-edit-btn { opacity: 1; }
-    @media (max-width: 500px) { .cell-edit-btn { opacity: 0.75; } }
+    .lb-edit-btn:hover { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.65); }
 
     /* 心情文字的行内编辑按钮 */
     .note-edit-btn {
@@ -565,6 +561,7 @@
     <p class="lb-caption" id="lb-caption"></p>
     <input class="lb-caption-input" id="lb-caption-input" type="text" placeholder="写几句话…"
       onkeydown="if(event.key==='Enter')saveLbCaption()">
+    <button class="lb-edit-btn" id="lb-edit-btn" onclick="event.stopPropagation();switchToEditMode()">编辑</button>
     <div class="lb-actions" id="lb-actions">
       <button class="lb-save-btn" id="lb-save-btn" onclick="saveLbCaption()">保存文字</button>
       <button class="lb-cover-btn" id="lb-cover-btn" onclick="setCoverLb()">设为封面</button>
@@ -674,7 +671,6 @@
       cell.innerHTML = `
         <img src="${p.thumbBase64 || p.base64}" alt="" loading="lazy">
         <span class="cell-num">${String(i + 1).padStart(2, '0')}</span>
-        <button class="cell-edit-btn" onclick="event.stopPropagation();openEditLightbox(${i})">编辑</button>
       `;
       cell.addEventListener('click', () => openViewLightbox(i));
       grid.appendChild(cell);
@@ -693,27 +689,25 @@
     document.getElementById('lb-caption').textContent = p.caption || '';
     document.getElementById('lb-caption').style.display = 'block';
     document.getElementById('lb-caption-input').style.display = 'none';
+    document.getElementById('lb-edit-btn').style.display = 'block';
     document.getElementById('lb-actions').classList.remove('open');
     document.getElementById('lb-hint').style.display = 'block';
     document.getElementById('lightbox').classList.add('open');
   }
 
-  function openEditLightbox(idx) {
-    const p = photos[idx];
-    currentLbIdx = idx;
-    document.getElementById('lb-img').src = p.base64;
-    document.getElementById('lb-num').textContent =
-      String(idx + 1).padStart(2, '0') + ' / ' + String(photos.length).padStart(2, '0');
+  function switchToEditMode() {
+    if (currentLbIdx < 0) return;
+    const p = photos[currentLbIdx];
     document.getElementById('lb-caption').style.display = 'none';
+    document.getElementById('lb-edit-btn').style.display = 'none';
+    document.getElementById('lb-hint').style.display = 'none';
     const inp = document.getElementById('lb-caption-input');
     inp.style.display = 'block';
     inp.value = p.caption || '';
     document.getElementById('lb-save-btn').textContent = '保存文字';
     document.getElementById('lb-cover-btn').textContent = '设为封面';
     document.getElementById('lb-actions').classList.add('open');
-    document.getElementById('lb-hint').style.display = 'none';
-    document.getElementById('lightbox').classList.add('open');
-    setTimeout(() => inp.focus(), 80);
+    setTimeout(() => inp.focus(), 60);
   }
 
   function closeLightbox() {
