@@ -212,34 +212,99 @@
       pointer-events: none;
     }
 
-    /* 删除 / 封面按钮（编辑模式） */
-    .photo-delete-btn {
+    /* 每张照片的编辑按钮 */
+    .cell-edit-btn {
       position: absolute;
-      top: 6px; right: 6px;
+      top: 5px; right: 5px;
       font-family: 'Space Mono', monospace;
-      font-size: 0.36rem;
+      font-size: 0.3rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      background: rgba(250,248,243,0.92);
-      border: 1px solid #d4a090;
-      color: #a0432a;
-      padding: 3px 7px;
-      cursor: pointer;
-      display: none;
-      z-index: 2;
-    }
-    .photo-cover-btn {
-      position: absolute;
-      bottom: 6px; right: 6px;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.36rem;
-      background: rgba(250,248,243,0.92);
-      border: 1px solid var(--faint);
+      background: rgba(250,248,243,0.88);
+      border: 1px solid rgba(0,0,0,0.1);
       color: var(--muted);
       padding: 3px 7px;
       cursor: pointer;
-      display: none;
       z-index: 2;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .photo-cell:hover .cell-edit-btn { opacity: 1; }
+    @media (max-width: 500px) { .cell-edit-btn { opacity: 0.75; } }
+
+    /* 心情文字的行内编辑按钮 */
+    .note-edit-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.36rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: none;
+      border: 1px solid var(--faint);
+      color: var(--faint);
+      padding: 3px 9px;
+      cursor: pointer;
+      margin-left: 10px;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .note-edit-btn:hover { border-color: var(--muted); color: var(--muted); }
+    .note-cancel-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.4rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: none;
+      border: 1px solid var(--faint);
+      color: var(--muted);
+      padding: 5px 13px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    /* lightbox 操作按钮（编辑模式） */
+    .lb-actions {
+      display: none;
+      flex-direction: row;
+      gap: 8px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .lb-actions.open { display: flex; }
+    .lb-save-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.36rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(255,255,255,0.88);
+      border: none;
+      color: #1c1810;
+      padding: 5px 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .lb-save-btn:hover { background: #fff; }
+    .lb-cover-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.36rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: none;
+      border: 1px solid rgba(255,255,255,0.22);
+      color: rgba(255,255,255,0.45);
+      padding: 5px 14px;
+      cursor: pointer;
+    }
+    .lb-delete-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.36rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: none;
+      border: 1px solid rgba(212,160,144,0.5);
+      color: rgba(180,80,60,0.75);
+      padding: 5px 14px;
+      cursor: pointer;
     }
 
     /* ── LIGHTBOX ── */
@@ -437,16 +502,21 @@
       <h1 class="month-title" id="month-title"></h1>
       <p class="month-id" id="month-id-el"></p>
     </div>
-    <button class="edit-toggle" id="edit-toggle" onclick="toggleEdit()">编辑</button>
   </header>
 
   <!-- Note / mood -->
   <div class="note-section" id="note-section" style="display:none">
     <div class="note-label">this month</div>
-    <p class="note-text" id="note-text"></p>
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <p class="note-text" id="note-text"></p>
+      <button class="note-edit-btn" id="note-edit-btn" onclick="toggleNoteEdit()">编辑</button>
+    </div>
     <div class="note-edit-wrap" id="note-edit-wrap">
       <textarea class="note-textarea" id="note-textarea" placeholder="写下这个月的心情…"></textarea>
-      <button class="note-save-btn" onclick="saveNote()">保存心情</button>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="note-save-btn" onclick="saveNote()">保存</button>
+        <button class="note-cancel-btn" onclick="toggleNoteEdit()">取消</button>
+      </div>
     </div>
   </div>
 
@@ -494,8 +564,13 @@
     <span class="lb-num" id="lb-num"></span>
     <p class="lb-caption" id="lb-caption"></p>
     <input class="lb-caption-input" id="lb-caption-input" type="text" placeholder="写几句话…"
-      onblur="saveLbCaption()" onkeydown="if(event.key==='Enter')this.blur()">
-    <span class="lb-hint">tap anywhere to close</span>
+      onkeydown="if(event.key==='Enter')saveLbCaption()">
+    <div class="lb-actions" id="lb-actions">
+      <button class="lb-save-btn" id="lb-save-btn" onclick="saveLbCaption()">保存文字</button>
+      <button class="lb-cover-btn" id="lb-cover-btn" onclick="setCoverLb()">设为封面</button>
+      <button class="lb-delete-btn" onclick="deleteLbPhoto()">删除照片</button>
+    </div>
+    <span class="lb-hint" id="lb-hint">tap anywhere to close</span>
   </div>
 </div>
 
@@ -515,9 +590,8 @@
   const photosRef     = db.collection('monthPhotos');
 
   const monthId = new URLSearchParams(location.search).get('month') || '';
-  let isEditMode = false;
-  let monthData  = null;
-  let photos     = [];
+  let monthData = null;
+  let photos    = [];
 
   // ── compress image ──
   function compress(file, maxW = 1200, q = 0.78) {
@@ -587,56 +661,59 @@
     show('divider');
 
     renderPhotos();
+    show('add-photo-wrap');
   }
 
   function renderPhotos() {
     const grid = document.getElementById('photo-grid');
     grid.innerHTML = '';
-
     photos.forEach((p, i) => {
       const cell = document.createElement('div');
       cell.className = 'photo-cell';
       cell.dataset.id = p.id;
-
       cell.innerHTML = `
         <img src="${p.thumbBase64 || p.base64}" alt="" loading="lazy">
         <span class="cell-num">${String(i + 1).padStart(2, '0')}</span>
-        <button class="photo-delete-btn" onclick="event.stopPropagation();deletePhoto('${p.id}')">删除</button>
-        <button class="photo-cover-btn"  onclick="event.stopPropagation();setCover('${p.id}')">设为封面</button>
+        <button class="cell-edit-btn" onclick="event.stopPropagation();openEditLightbox(${i})">编辑</button>
       `;
-
-      cell.addEventListener('click', () => openLightbox(i));
+      cell.addEventListener('click', () => openViewLightbox(i));
       grid.appendChild(cell);
     });
-
-    applyEditMode();
   }
 
   // ── lightbox ──
   let currentLbIdx = -1;
 
-  function openLightbox(idx) {
+  function openViewLightbox(idx) {
     const p = photos[idx];
     currentLbIdx = idx;
     document.getElementById('lb-img').src = p.base64;
     document.getElementById('lb-num').textContent =
       String(idx + 1).padStart(2, '0') + ' / ' + String(photos.length).padStart(2, '0');
-
-    const capEl   = document.getElementById('lb-caption');
-    const inputEl = document.getElementById('lb-caption-input');
-
-    if (isEditMode) {
-      capEl.style.display   = 'none';
-      inputEl.style.display = 'block';
-      inputEl.value = p.caption || '';
-      setTimeout(() => inputEl.focus(), 80);
-    } else {
-      capEl.textContent     = p.caption || '';
-      capEl.style.display   = 'block';
-      inputEl.style.display = 'none';
-    }
-
+    document.getElementById('lb-caption').textContent = p.caption || '';
+    document.getElementById('lb-caption').style.display = 'block';
+    document.getElementById('lb-caption-input').style.display = 'none';
+    document.getElementById('lb-actions').classList.remove('open');
+    document.getElementById('lb-hint').style.display = 'block';
     document.getElementById('lightbox').classList.add('open');
+  }
+
+  function openEditLightbox(idx) {
+    const p = photos[idx];
+    currentLbIdx = idx;
+    document.getElementById('lb-img').src = p.base64;
+    document.getElementById('lb-num').textContent =
+      String(idx + 1).padStart(2, '0') + ' / ' + String(photos.length).padStart(2, '0');
+    document.getElementById('lb-caption').style.display = 'none';
+    const inp = document.getElementById('lb-caption-input');
+    inp.style.display = 'block';
+    inp.value = p.caption || '';
+    document.getElementById('lb-save-btn').textContent = '保存文字';
+    document.getElementById('lb-cover-btn').textContent = '设为封面';
+    document.getElementById('lb-actions').classList.add('open');
+    document.getElementById('lb-hint').style.display = 'none';
+    document.getElementById('lightbox').classList.add('open');
+    setTimeout(() => inp.focus(), 80);
   }
 
   function closeLightbox() {
@@ -646,36 +723,54 @@
 
   async function saveLbCaption() {
     if (currentLbIdx < 0) return;
-    const p       = photos[currentLbIdx];
+    const p = photos[currentLbIdx];
     const trimmed = document.getElementById('lb-caption-input').value.trim();
     await photosRef.doc(p.id).update({ caption: trimmed });
     p.caption = trimmed;
+    const btn = document.getElementById('lb-save-btn');
+    btn.textContent = '✓ 已保存';
+    setTimeout(() => { btn.textContent = '保存文字'; }, 1800);
   }
 
-  // ── edit mode ──
-  function toggleEdit() {
-    isEditMode = !isEditMode;
-    const btn = document.getElementById('edit-toggle');
-    btn.textContent = isEditMode ? '完成' : '编辑';
-    btn.classList.toggle('active', isEditMode);
+  async function setCoverLb() {
+    if (currentLbIdx < 0) return;
+    const p = photos[currentLbIdx];
+    await monthsRef.doc(monthId).update({ coverBase64: p.base64 });
+    const btn = document.getElementById('lb-cover-btn');
+    btn.textContent = '✓ 已设为封面';
+    setTimeout(() => { btn.textContent = '设为封面'; }, 1800);
+  }
+
+  async function deleteLbPhoto() {
+    if (currentLbIdx < 0) return;
+    if (!confirm('删除这张照片？')) return;
+    const p = photos[currentLbIdx];
+    await photosRef.doc(p.id).delete();
+    photos = photos.filter(x => x.id !== p.id);
+    document.getElementById('frame-count').textContent =
+      `${photos.length} frame${photos.length !== 1 ? 's' : ''}`;
     closeLightbox();
-    applyEditMode();
-  }
-
-  function applyEditMode() {
-    document.getElementById('note-text').style.display      = isEditMode ? 'none'  : 'block';
-    document.getElementById('note-edit-wrap').style.display = isEditMode ? 'block' : 'none';
-    document.querySelectorAll('.photo-delete-btn').forEach(b => b.style.display = isEditMode ? 'block' : 'none');
-    document.querySelectorAll('.photo-cover-btn').forEach(b  => b.style.display = isEditMode ? 'block' : 'none');
-    document.getElementById('add-photo-wrap').style.display = isEditMode ? 'block' : 'none';
+    renderPhotos();
   }
 
   // ── note ──
+  function toggleNoteEdit() {
+    const wrap = document.getElementById('note-edit-wrap');
+    const text = document.getElementById('note-text');
+    const btn  = document.getElementById('note-edit-btn');
+    const open = wrap.style.display === 'block';
+    wrap.style.display = open ? 'none' : 'block';
+    text.style.display = open ? 'block' : 'none';
+    btn.style.display  = open ? 'inline-block' : 'none';
+    if (!open) document.getElementById('note-textarea').focus();
+  }
+
   async function saveNote() {
     const val = document.getElementById('note-textarea').value.trim();
     await monthsRef.doc(monthId).update({ note: val });
     monthData.note = val;
     document.getElementById('note-text').textContent = val;
+    toggleNoteEdit();
   }
 
   // ── upload ──
@@ -710,25 +805,6 @@
     // update frame count
     document.getElementById('frame-count').textContent =
       `${photos.length} frame${photos.length !== 1 ? 's' : ''}`;
-  }
-
-  async function setCover(photoId) {
-  const p = photos.find(x => x.id === photoId);
-  if (!p) return;
-  await monthsRef.doc(monthId).update({ coverBase64: p.base64 });
-  document.querySelectorAll('.photo-cover-btn').forEach(b => b.textContent = '设为封面');
-  const btn = document.querySelector(`.photo-item[data-id="${photoId}"] .photo-cover-btn`);
-  if (btn) btn.textContent = '✓ 已设为封面';
-}
-  
-  // ── delete ──
-  async function deletePhoto(photoId) {
-    if (!confirm('删除这张照片？')) return;
-    await photosRef.doc(photoId).delete();
-    photos = photos.filter(p => p.id !== photoId);
-    document.getElementById('frame-count').textContent =
-      `${photos.length} frame${photos.length !== 1 ? 's' : ''}`;
-    renderPhotos();
   }
 
   // ── create month ──
