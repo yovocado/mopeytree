@@ -115,6 +115,24 @@
     }
     .plants-link:hover { color: var(--muted); }
 
+    .new-month-btn {
+      position: fixed;
+      bottom: 50px;
+      right: 50px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.5rem;
+      color: var(--faint);
+      letter-spacing: 0.14em;
+      text-transform: lowercase;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: color 0.2s;
+      z-index: 100;
+      padding: 0;
+    }
+    .new-month-btn:hover { color: var(--muted); }
+
     /* ── STATUS CORNER ── */
     .status {
       position: fixed;
@@ -297,6 +315,7 @@
   </div>
 
   <a href="plants.html" class="plants-link">plants</a>
+  <button class="new-month-btn" id="new-month-btn" onclick="goToCurrentMonth()">+ new month</button>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -332,6 +351,13 @@
       'f/1.4 · 1/320s · ISO 200',
       'f/3.5 · 1/40s  · ISO 800',
     ];
+
+    function goToCurrentMonth() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      window.location.href = `month.html?month=${y}-${m}`;
+    }
 
     // Firebase 初始化
 firebase.initializeApp({
