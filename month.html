@@ -671,7 +671,9 @@
     document.getElementById('lb-img').src = p.base64;
     document.getElementById('lb-num').textContent =
       String(idx + 1).padStart(2, '0') + ' / ' + String(photos.length).padStart(2, '0');
-    document.getElementById('lb-caption-input').value = p.caption || '';
+    const inp = document.getElementById('lb-caption-input');
+    inp.value = p.caption || '';
+    inp.style.display = 'block';
     document.getElementById('lb-save-btn').textContent = '保存文字';
     document.getElementById('lb-cover-btn').textContent = '设为封面';
     document.getElementById('lightbox').classList.add('open');
