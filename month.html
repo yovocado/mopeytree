@@ -365,10 +365,12 @@
       text-align: center;
       width: 340px;
       max-width: calc(100vw - 56px);
-      padding: 6px 0;
+      padding: 6px 4px;
       outline: none;
       line-height: 1.9;
       display: none;
+      resize: none;
+      white-space: pre-wrap;
     }
     .lb-caption-input::placeholder { color: rgba(255,255,255,0.18); }
     .lb-caption-input:focus { border-bottom-color: rgba(255,255,255,0.4); }
@@ -543,8 +545,7 @@
   <img class="lb-img" id="lb-img" onclick="event.stopPropagation()" alt="">
   <div class="lb-body" onclick="event.stopPropagation()">
     <span class="lb-num" id="lb-num"></span>
-    <input class="lb-caption-input" id="lb-caption-input" type="text" placeholder="写几句话…"
-      onkeydown="if(event.key==='Enter')saveLbCaption()">
+    <textarea class="lb-caption-input" id="lb-caption-input" placeholder="写几句话…" rows="3"></textarea>
     <div class="lb-actions open" id="lb-actions">
       <button class="lb-save-btn" id="lb-save-btn" onclick="saveLbCaption()">保存文字</button>
       <button class="lb-cover-btn" id="lb-cover-btn" onclick="setCoverLb()">设为封面</button>
