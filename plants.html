@@ -103,42 +103,28 @@
     }
 
     .plant-tools {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
+      display: flex;
+      justify-content: flex-end;
       margin-bottom: 16px;
     }
 
-    .plant-tool {
-      min-width: 0;
-    }
-
-    .plant-tool label {
+    .sort-chip {
       font-family: 'Space Mono', monospace;
-      font-size: 0.38rem;
-      color: var(--faint);
+      font-size: 0.42rem;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      display: block;
-      margin-bottom: 4px;
+      background: none;
+      border: 1px solid var(--faint);
+      color: var(--muted);
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: all 0.2s;
     }
-
-    .plant-tool input,
-    .plant-tool select {
-      width: 100%;
-      background: var(--card);
-      border: 1px solid rgba(184,179,168,0.75);
-      color: var(--text);
-      font-family: 'EB Garamond', serif;
-      font-size: 0.88rem;
-      padding: 7px 9px;
-      outline: none;
-      border-radius: 0;
-    }
-
-    .plant-tool input:focus,
-    .plant-tool select:focus {
+    .sort-chip:hover,
+    .sort-chip.active {
       border-color: var(--muted);
+      color: var(--text);
+      background: rgba(250,248,243,0.55);
     }
 
     .plant-grid {
@@ -632,7 +618,6 @@
     @media (max-width: 600px) {
       .page-header { padding: 24px 20px 0; }
       .section      { padding: 22px 20px 0; }
-      .plant-tools  { grid-template-columns: 1fr 1fr; }
       .plant-grid   { grid-template-columns: 1fr 1fr; gap: 10px; }
       .detail-body  { padding: 16px 18px 20px; }
       .detail-fields { grid-template-columns: 1fr; }
@@ -640,7 +625,6 @@
       .form-row     { grid-template-columns: 1fr; }
     }
     @media (max-width: 360px) {
-      .plant-tools { grid-template-columns: 1fr; }
       .plant-grid { grid-template-columns: 1fr; }
     }
   </style>
@@ -657,33 +641,8 @@
 
   <div class="section">
     <div class="section-label">所有植物</div>
-    <div class="plant-tools" aria-label="植物筛选和排序">
-      <div class="plant-tool">
-        <label for="plant-search">搜索</label>
-        <input type="search" id="plant-search" placeholder="名称 / 位置 / 备注" oninput="renderGrid()">
-      </div>
-      <div class="plant-tool">
-        <label for="group-filter">分组</label>
-        <select id="group-filter" onchange="renderGrid()">
-          <option value="">全部分组</option>
-        </select>
-      </div>
-      <div class="plant-tool">
-        <label for="location-filter">位置</label>
-        <select id="location-filter" onchange="renderGrid()">
-          <option value="">全部位置</option>
-        </select>
-      </div>
-      <div class="plant-tool">
-        <label for="sort-mode">排序</label>
-        <select id="sort-mode" onchange="renderGrid()">
-          <option value="due">逾期优先</option>
-          <option value="next">下次浇水</option>
-          <option value="name">名称</option>
-          <option value="group">分组</option>
-          <option value="location">位置</option>
-        </select>
-      </div>
+    <div class="plant-tools">
+      <button class="sort-chip" id="overdue-sort-btn" onclick="toggleOverdueSort()" aria-pressed="false">逾期优先</button>
     </div>
     <div class="plant-grid" id="plant-grid">
       <div class="loading">loading...</div>
@@ -833,6 +792,7 @@
     let editId   = null;
     let detailId = null;
     let currentGrowthPhotoId = null;
+    let overdueSortActive = false;
 
     const todayStr = () => {
       const d = new Date();
@@ -870,52 +830,21 @@
       showNotice._timer = setTimeout(() => notice.remove(), 2200);
     }
 
-    function setSelectOptions(selectId, values, fallbackText) {
-      const select = document.getElementById(selectId);
-      const current = select.value;
-      select.innerHTML = `<option value="">${fallbackText}</option>` +
-        values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
-      if (values.includes(current)) select.value = current;
+    function toggleOverdueSort() {
+      overdueSortActive = !overdueSortActive;
+      const btn = document.getElementById('overdue-sort-btn');
+      btn.classList.toggle('active', overdueSortActive);
+      btn.setAttribute('aria-pressed', String(overdueSortActive));
+      renderGrid();
     }
 
-    function refreshFilters() {
-      const groups = [...new Set(plants.map(p => p.group).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'));
-      const locations = [...new Set(plants.map(p => p.location).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'));
-      setSelectOptions('group-filter', groups, '全部分组');
-      setSelectOptions('location-filter', locations, '全部位置');
-    }
-
-    function nextWaterDate(plant) {
-      if (!plant.lastWateredDate) return null;
-      const next = new Date(plant.lastWateredDate + 'T00:00:00');
-      next.setDate(next.getDate() + (plant.wateringFrequencyDays || 7));
-      return next;
-    }
-
-    function filteredPlants() {
-      const q = document.getElementById('plant-search').value.trim().toLowerCase();
-      const group = document.getElementById('group-filter').value;
-      const location = document.getElementById('location-filter').value;
-      const sortMode = document.getElementById('sort-mode').value;
-      const haystack = p => [p.name, p.group, p.location, p.light, p.notes].join(' ').toLowerCase();
-
-      return plants
-        .filter(p => !q || haystack(p).includes(q))
-        .filter(p => !group || p.group === group)
-        .filter(p => !location || p.location === location)
-        .sort((a, b) => {
-          if (sortMode === 'name') return (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN');
-          if (sortMode === 'group') return (a.group || '').localeCompare(b.group || '', 'zh-Hans-CN') || (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN');
-          if (sortMode === 'location') return (a.location || '').localeCompare(b.location || '', 'zh-Hans-CN') || (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN');
-          const aDays = getDays(a);
-          const bDays = getDays(b);
-          if (sortMode === 'next') {
-            const aTime = nextWaterDate(a)?.getTime() ?? Number.MAX_SAFE_INTEGER;
-            const bTime = nextWaterDate(b)?.getTime() ?? Number.MAX_SAFE_INTEGER;
-            return aTime - bTime || (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN');
-          }
-          return aDays - bDays || (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN');
-        });
+    function visiblePlants() {
+      return [...plants].sort((a, b) => {
+        if (overdueSortActive) {
+          return getDays(a) - getDays(b) || (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN');
+        }
+        return (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN');
+      });
     }
 
     const ACTION_MAP = { water:'浇水', fertilize:'施肥', repot:'换盆', trim:'修剪', move:'移位', note:'备注' };
@@ -959,7 +888,6 @@
     async function loadPlants() {
       const snap = await plantsRef.orderBy('name').get();
       plants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      refreshFilters();
       renderGrid();
     }
 
@@ -969,12 +897,8 @@
         grid.innerHTML = `<p class="empty" style="grid-column:1/-1">还没有植物，点右上角添加</p>`;
         return;
       }
-      const visiblePlants = filteredPlants();
-      if (!visiblePlants.length) {
-        grid.innerHTML = `<p class="empty" style="grid-column:1/-1">没有符合条件的植物</p>`;
-        return;
-      }
-      grid.innerHTML = visiblePlants.map(p => {
+      const items = visiblePlants();
+      grid.innerHTML = items.map(p => {
         const s = statusInfo(getDays(p));
         const photoSrc = safeImageSrc(p.photoBase64);
         const photo = photoSrc
