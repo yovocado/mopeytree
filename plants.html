@@ -133,6 +133,85 @@
       filter: blur(18px);
     }
 
+    .rainbow-sheen,
+    .dream-bubble,
+    .star-charm,
+    .flower-glow {
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .rainbow-sheen {
+      width: 420px;
+      height: 180px;
+      background:
+        linear-gradient(105deg,
+          rgba(255,142,172,0) 0%,
+          rgba(255,142,172,0.18) 20%,
+          rgba(250,226,130,0.14) 36%,
+          rgba(126,218,190,0.13) 54%,
+          rgba(139,177,245,0.14) 72%,
+          rgba(255,142,172,0) 100%);
+      filter: blur(14px);
+      mix-blend-mode: screen;
+      opacity: 0.58;
+      transform: rotate(-16deg);
+    }
+    .rainbow-sheen.r1 { right: 13vw; top: 52px; }
+    .rainbow-sheen.r2 { left: 7vw; bottom: 9vh; width: 300px; height: 120px; opacity: 0.26; transform: rotate(-28deg); }
+
+    .dream-bubble {
+      border: 1px solid rgba(255,255,255,0.74);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 28% 22%, rgba(255,255,255,0.86), rgba(255,255,255,0.18) 18%, rgba(255,255,255,0) 32%),
+        radial-gradient(circle at 72% 74%, rgba(190,232,223,0.26), rgba(255,255,255,0) 46%),
+        linear-gradient(135deg, rgba(255,174,207,0.16), rgba(146,214,241,0.14));
+      box-shadow:
+        inset 5px 8px 16px rgba(255,255,255,0.24),
+        inset -7px -8px 18px rgba(110,132,124,0.08),
+        0 0 18px rgba(255,255,255,0.34);
+      opacity: 0.66;
+      animation: bubble-drift 14s ease-in-out infinite alternate;
+    }
+    .dream-bubble.bu1 { width: 58px; height: 58px; right: 19vw; top: 152px; animation-delay: -2s; }
+    .dream-bubble.bu2 { width: 34px; height: 34px; right: 9vw; top: 244px; opacity: 0.48; animation-delay: -6s; }
+    .dream-bubble.bu3 { width: 24px; height: 24px; right: 23vw; top: 284px; opacity: 0.42; animation-delay: -9s; }
+    .dream-bubble.bu4 { width: 44px; height: 44px; left: 6vw; bottom: 98px; opacity: 0.28; animation-delay: -4s; }
+
+    .star-charm {
+      width: var(--s, 22px);
+      height: var(--s, 22px);
+      background: var(--fill, rgba(255,214,105,0.34));
+      clip-path: polygon(50% 0%, 61% 34%, 97% 34%, 68% 55%, 79% 91%, 50% 69%, 21% 91%, 32% 55%, 3% 34%, 39% 34%);
+      filter:
+        drop-shadow(0 0 4px rgba(255,255,255,0.58))
+        drop-shadow(0 0 8px rgba(243,218,128,0.18));
+      opacity: 0.58;
+      transform: rotate(var(--rot, 0deg));
+    }
+    .star-charm.st1 { --s: 28px; --rot: -12deg; --fill: rgba(255,213,98,0.32); right: 15vw; top: 202px; }
+    .star-charm.st2 { --s: 20px; --rot: 18deg; --fill: rgba(255,151,180,0.28); right: 7vw; top: 352px; }
+    .star-charm.st3 { --s: 16px; --rot: -26deg; --fill: rgba(137,199,238,0.24); right: 28vw; top: 102px; }
+    .star-charm.st4 { --s: 18px; --rot: 12deg; --fill: rgba(174,218,137,0.2); left: 12vw; bottom: 154px; }
+
+    .flower-glow {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(248,225,102,0.36) 0 11%, rgba(255,255,255,0) 13%),
+        radial-gradient(ellipse at 50% 7%, rgba(249,151,181,0.28) 0 20%, rgba(255,255,255,0) 22%),
+        radial-gradient(ellipse at 92% 50%, rgba(249,151,181,0.24) 0 20%, rgba(255,255,255,0) 22%),
+        radial-gradient(ellipse at 50% 93%, rgba(249,151,181,0.22) 0 20%, rgba(255,255,255,0) 22%),
+        radial-gradient(ellipse at 8% 50%, rgba(249,151,181,0.24) 0 20%, rgba(255,255,255,0) 22%);
+      filter: blur(0.2px) drop-shadow(0 0 10px rgba(255,255,255,0.36));
+      opacity: 0.62;
+      transform: rotate(-18deg);
+    }
+    .flower-glow.f1 { right: 30vw; top: 64px; }
+    .flower-glow.f2 { right: 4vw; top: 420px; width: 38px; height: 38px; opacity: 0.36; }
+
     .seed {
       position: absolute;
       width: 1px;
@@ -223,6 +302,11 @@
     @keyframes drift {
       from { transform: translate3d(0, 0, 0) rotate(var(--r)); }
       to { transform: translate3d(10px, -14px, 0) rotate(calc(var(--r) + 5deg)); }
+    }
+
+    @keyframes bubble-drift {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to { transform: translate3d(14px, -18px, 0) scale(1.04); }
     }
 
     @keyframes seed-pop {
@@ -920,6 +1004,35 @@
       .dream-lines .bubble-line {
         display: none;
       }
+      .rainbow-sheen.r1 {
+        right: -80px;
+        top: 50px;
+        width: 260px;
+        height: 110px;
+        opacity: 0.28;
+      }
+      .rainbow-sheen.r2,
+      .dream-bubble.bu1,
+      .dream-bubble.bu3,
+      .dream-bubble.bu4,
+      .star-charm.st1,
+      .star-charm.st2,
+      .star-charm.st4,
+      .flower-glow {
+        display: none;
+      }
+      .dream-bubble.bu2 {
+        right: 20px;
+        top: 176px;
+        width: 28px;
+        height: 28px;
+        opacity: 0.28;
+      }
+      .star-charm.st3 {
+        right: 86px;
+        top: 92px;
+        opacity: 0.26;
+      }
       .seed {
         opacity: 0.45;
       }
@@ -999,6 +1112,18 @@
       <path class="dream-star" d="M858 176 H872 M865 169 V183" />
       <path class="dream-star" d="M1088 386 H1102 M1095 379 V393" />
     </svg>
+    <span class="rainbow-sheen r1"></span>
+    <span class="rainbow-sheen r2"></span>
+    <span class="dream-bubble bu1"></span>
+    <span class="dream-bubble bu2"></span>
+    <span class="dream-bubble bu3"></span>
+    <span class="dream-bubble bu4"></span>
+    <span class="star-charm st1"></span>
+    <span class="star-charm st2"></span>
+    <span class="star-charm st3"></span>
+    <span class="star-charm st4"></span>
+    <span class="flower-glow f1"></span>
+    <span class="flower-glow f2"></span>
     <span class="seed s1"></span>
     <span class="seed s2"></span>
     <span class="seed s3"></span>
