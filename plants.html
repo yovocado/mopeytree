@@ -50,7 +50,7 @@
     }
 
     .dream-atmosphere {
-      display: none;
+      display: block;
       position: fixed;
       inset: 0;
       pointer-events: none;
@@ -78,7 +78,10 @@
     }
 
     .dream-lines .tree-line,
-    .dream-lines .seed-line {
+    .dream-lines .seed-line,
+    .dream-lines .cloud-line,
+    .dream-lines .apple-line,
+    .dream-lines .bubble-line {
       fill: none;
       stroke: rgba(91,103,82,0.24);
       stroke-width: 1.15;
@@ -91,8 +94,29 @@
       stroke-width: 0.9;
     }
 
+    .dream-lines .cloud-line,
+    .dream-lines .bubble-line {
+      stroke: rgba(118,141,135,0.2);
+      stroke-width: 1;
+    }
+
+    .dream-lines .apple-line {
+      stroke: rgba(183,128,99,0.28);
+      stroke-width: 1;
+    }
+
     .dream-lines .mist-dot {
       fill: rgba(255,255,255,0.58);
+    }
+
+    .dream-lines .warm-dot {
+      fill: rgba(236,217,168,0.26);
+    }
+
+    .dream-lines .dream-star {
+      stroke: rgba(236,217,168,0.34);
+      stroke-width: 0.8;
+      stroke-linecap: round;
     }
 
     .dream-atmosphere::before {
@@ -136,25 +160,39 @@
     .butterfly {
       position: absolute;
       right: 5vw;
-      top: 86px;
-      width: 18px;
-      height: 15px;
-      opacity: 0.5;
+      top: 78px;
+      width: 32px;
+      height: 27px;
+      opacity: 0.52;
       transform: rotate(-12deg);
     }
     .butterfly::before,
     .butterfly::after {
       content: '';
       position: absolute;
-      top: 2px;
-      width: 11px;
-      height: 14px;
+      top: 3px;
+      width: 18px;
+      height: 24px;
       border: 1px solid rgba(142,98,57,0.55);
       background: rgba(215,143,83,0.26);
       border-radius: 75% 35% 70% 40%;
     }
     .butterfly::before { left: 0; transform: rotate(-22deg); }
     .butterfly::after { right: 0; transform: scaleX(-1) rotate(-22deg); }
+
+    .butterfly.b2 {
+      right: 14vw;
+      top: 110px;
+      width: 25px;
+      height: 21px;
+      opacity: 0.32;
+      transform: rotate(10deg);
+    }
+    .butterfly.b2::before,
+    .butterfly.b2::after {
+      width: 14px;
+      height: 19px;
+    }
 
     .water-seeds {
       position: fixed;
@@ -876,6 +914,12 @@
         transform: scale(1.18);
         transform-origin: left top;
       }
+      .dream-lines .right-detail,
+      .dream-lines .cloud-line,
+      .dream-lines .apple-line,
+      .dream-lines .bubble-line {
+        display: none;
+      }
       .seed {
         opacity: 0.45;
       }
@@ -886,6 +930,16 @@
         right: 22px;
         top: 112px;
         opacity: 0.35;
+        width: 22px;
+        height: 18px;
+      }
+      .butterfly::before,
+      .butterfly::after {
+        width: 13px;
+        height: 17px;
+      }
+      .butterfly.b2 {
+        display: none;
       }
       .section      { padding: 22px 20px 0; }
       .plant-grid   { grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -921,20 +975,35 @@
       <path class="tree-line" d="M44 556 C132 438 210 356 278 286" />
       <path class="tree-line" d="M86 422 C158 376 210 316 234 250" />
       <path class="tree-line" d="M84 300 C150 244 205 204 264 176" />
-      <path class="tree-line" d="M994 80 C1034 126 1068 176 1094 238" />
-      <path class="tree-line" d="M1034 134 C1078 126 1118 110 1150 82" />
+      <path class="tree-line right-detail" d="M822 118 C888 50 998 36 1134 74" />
+      <path class="tree-line right-detail" d="M996 82 C1034 126 1068 176 1094 238" />
+      <path class="tree-line right-detail" d="M1034 134 C1078 126 1118 110 1150 82" />
+      <path class="tree-line right-detail" d="M1086 380 C1128 342 1160 322 1190 316" />
       <path class="seed-line" d="M386 82 C393 67 402 58 414 50" />
       <path class="seed-line" d="M410 50 C397 49 386 52 376 60 M410 50 C400 56 392 65 386 76 M410 50 C414 62 415 74 414 86" />
       <path class="seed-line" d="M1110 410 C1118 392 1132 379 1148 368" />
       <path class="seed-line" d="M1148 368 C1132 366 1118 371 1106 382 M1148 368 C1136 377 1127 389 1120 404 M1148 368 C1153 382 1154 396 1152 410" />
+      <path class="cloud-line" d="M914 226 C924 210 946 208 956 226 C966 202 1002 202 1012 228 C1030 214 1062 222 1066 248 M910 248 H1070" />
+      <path class="apple-line" d="M986 318 C970 326 970 364 994 370 C1008 374 1012 358 1018 350 C1024 358 1028 374 1042 370 C1066 364 1066 326 1050 318 C1037 310 1028 318 1018 326 C1008 318 999 310 986 318 Z" />
+      <path class="apple-line" d="M1018 324 C1020 308 1026 302 1034 296 M1034 296 C1044 294 1050 296 1056 300" />
+      <circle class="bubble-line" cx="1052" cy="246" r="11" />
+      <circle class="bubble-line" cx="1092" cy="292" r="8" />
+      <circle class="bubble-line" cx="1114" cy="206" r="5" />
       <circle class="mist-dot" cx="1038" cy="118" r="22" />
       <circle class="mist-dot" cx="928" cy="602" r="34" />
       <circle class="mist-dot" cx="156" cy="96" r="28" />
+      <circle class="warm-dot" cx="740" cy="126" r="2.5" />
+      <circle class="warm-dot" cx="812" cy="158" r="2.5" />
+      <circle class="warm-dot" cx="938" cy="338" r="2" />
+      <circle class="warm-dot" cx="1118" cy="430" r="2" />
+      <path class="dream-star" d="M858 176 H872 M865 169 V183" />
+      <path class="dream-star" d="M1088 386 H1102 M1095 379 V393" />
     </svg>
     <span class="seed s1"></span>
     <span class="seed s2"></span>
     <span class="seed s3"></span>
     <span class="butterfly"></span>
+    <span class="butterfly b2"></span>
   </div>
   <div class="water-seeds" id="water-seeds" aria-hidden="true"></div>
 
