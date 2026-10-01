@@ -27,7 +27,11 @@
     }
 
     body {
-      background: var(--bg);
+      background:
+        linear-gradient(90deg, rgba(237,234,226,0.16), rgba(237,234,226,0.66) 48%, rgba(237,234,226,0.16)),
+        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(237,234,226,0.56) 74%, rgba(237,234,226,0.82)),
+        url('assets/mopeytree-liminal-bg.png') center top / cover fixed no-repeat,
+        var(--bg);
       color: var(--text);
       font-family: 'EB Garamond', Georgia, serif;
       overflow-x: hidden;
@@ -266,6 +270,14 @@
 
     /* ── MOBILE ── */
     @media (max-width: 680px) {
+      body {
+        background:
+          linear-gradient(90deg, rgba(237,234,226,0.2), rgba(237,234,226,0.72) 50%, rgba(237,234,226,0.22)),
+          linear-gradient(180deg, rgba(255,255,255,0.02), rgba(237,234,226,0.6) 70%, rgba(237,234,226,0.86)),
+          url('assets/mopeytree-liminal-bg.png') 42% top / cover no-repeat,
+          var(--bg);
+      }
+
       .center-text {
         position: relative;
         top: auto; left: auto;
