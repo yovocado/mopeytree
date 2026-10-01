@@ -361,7 +361,7 @@
 
     // Firebase 初始化
 firebase.initializeApp({
-  apiKey: "AIzaSyDy•••••••••••••••••••••••••••••••",
+  apiKey: "AIzaSyDyoFHUE1Tr6t1gXAU4qL3qi0lNls5ItQU",
   authDomain: "mopeytree.firebaseapp.com",
   projectId: "mopeytree",
   storageBucket: "mopeytree.firebasestorage.app",
@@ -369,6 +369,14 @@ firebase.initializeApp({
   appId: "1:743700580569:web:62585c863c5a5c986296c8"
 });
 const db = firebase.firestore();
+
+function safeText(value) {
+  return value == null ? '' : String(value);
+}
+
+function isSafeImageSrc(value) {
+  return typeof value === 'string' && /^data:image\/(jpeg|jpg|png|webp|gif);base64,/i.test(value);
+}
 
 // 心情还是从 data.json 读
 fetch('data.json').then(r => r.json()).then(d => {
@@ -396,19 +404,41 @@ db.collection('months').get().then(snap => {
     a.style.setProperty('--base-transform', `rotate(${rotate}deg)`);
     a.style.transform = `rotate(${rotate}deg)`;
 
-    a.innerHTML = `
-      <div class="card-inner">
-        ${month.coverBase64
-          ? `<img class="card-photo" src="${month.coverBase64}" alt="${month.label}">`
-          : `<div class="card-placeholder"><span>no photo yet</span></div>`
-        }
-        <div class="card-vignette"></div>
-        <div class="card-meta">
-          <span>${exif}</span>
-        </div>
-        <span class="card-label">${month.label}</span>
-      </div>
-    `;
+    const inner = document.createElement('div');
+    inner.className = 'card-inner';
+
+    if (isSafeImageSrc(month.coverBase64)) {
+      const img = document.createElement('img');
+      img.className = 'card-photo';
+      img.src = month.coverBase64;
+      img.alt = safeText(month.label);
+      inner.appendChild(img);
+    } else {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'card-placeholder';
+      const placeholderText = document.createElement('span');
+      placeholderText.textContent = 'no photo yet';
+      placeholder.appendChild(placeholderText);
+      inner.appendChild(placeholder);
+    }
+
+    const vignette = document.createElement('div');
+    vignette.className = 'card-vignette';
+    inner.appendChild(vignette);
+
+    const meta = document.createElement('div');
+    meta.className = 'card-meta';
+    const metaText = document.createElement('span');
+    metaText.textContent = exif;
+    meta.appendChild(metaText);
+    inner.appendChild(meta);
+
+    const label = document.createElement('span');
+    label.className = 'card-label';
+    label.textContent = safeText(month.label);
+    inner.appendChild(label);
+
+    a.appendChild(inner);
 
     scatter.appendChild(a);
     setTimeout(() => a.classList.add('visible'), 80 + i * 120);

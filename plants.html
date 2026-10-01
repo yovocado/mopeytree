@@ -718,7 +718,41 @@
     let editId   = null;
     let detailId = null;
 
-    const todayStr = () => new Date().toISOString().split('T')[0];
+    const todayStr = () => {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
+    function esc(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function safeImageSrc(value) {
+      return typeof value === 'string' && /^data:image\/(jpeg|jpg|png|webp|gif);base64,/i.test(value) ? value : '';
+    }
+
+    function showNotice(message) {
+      const grid = document.getElementById('plant-grid');
+      let notice = document.getElementById('plant-notice');
+      if (!notice) {
+        notice = document.createElement('div');
+        notice.id = 'plant-notice';
+        notice.className = 'empty';
+        notice.style.gridColumn = '1/-1';
+        grid.prepend(notice);
+      }
+      notice.textContent = message;
+      clearTimeout(showNotice._timer);
+      showNotice._timer = setTimeout(() => notice.remove(), 2200);
+    }
 
     const ACTION_MAP = { water:'浇水', fertilize:'施肥', repot:'换盆', trim:'修剪', move:'移位', note:'备注' };
 
@@ -739,7 +773,7 @@
     }
 
     // compress image to base64
-    function compressImage(file, maxW=800, quality=0.75) {
+    function compressImage(file, maxW=640, quality=0.68) {
       return new Promise(resolve => {
         const img = new Image();
         const url = URL.createObjectURL(file);
@@ -772,15 +806,16 @@
       }
       grid.innerHTML = plants.map(p => {
         const s = statusInfo(getDays(p));
-        const photo = p.photoBase64
-          ? `<img class="card-photo" src="${p.photoBase64}" alt="${p.name}">`
+        const photoSrc = safeImageSrc(p.photoBase64);
+        const photo = photoSrc
+          ? `<img class="card-photo" src="${photoSrc}" alt="${esc(p.name)}">`
           : `<div class="card-photo-placeholder"><span>no photo</span></div>`;
         return `<div class="plant-card ${s.cls}" data-id="${p.id}">
           ${photo}
           <div class="card-body">
-            <div class="card-name">${p.name}</div>
-            <div class="card-group">${p.group || ''}</div>
-            <div class="card-location">${p.location || ''}</div>
+            <div class="card-name">${esc(p.name)}</div>
+            <div class="card-group">${esc(p.group || '')}</div>
+            <div class="card-location">${esc(p.location || '')}</div>
             <span class="card-status ${s.cls}">${s.text}</span>
           </div>
         </div>`;
@@ -802,8 +837,9 @@
       const img         = document.getElementById('detail-photo-img');
       const placeholder = document.getElementById('detail-photo-placeholder');
       const changeBtn   = document.getElementById('photo-change-btn');
-      if (p.photoBase64) {
-        img.src = p.photoBase64;
+      const photoSrc = safeImageSrc(p.photoBase64);
+      if (photoSrc) {
+        img.src = photoSrc;
         img.style.display = 'block';
         placeholder.style.display = 'none';
         changeBtn.style.display = 'block';
@@ -815,10 +851,10 @@
 
       const s = statusInfo(getDays(p));
       document.getElementById('detail-fields').innerHTML = `
-        <div class="detail-field"><label>位置</label><span>${p.location || '—'}</span></div>
-        <div class="detail-field"><label>光照</label><span>${p.light || '—'}</span></div>
-        <div class="detail-field"><label>浇水频率</label><span>每 ${p.wateringFrequencyDays || '?'} 天</span></div>
-        <div class="detail-field"><label>上次浇水</label><span>${p.lastWateredDate || '未记录'}</span></div>
+        <div class="detail-field"><label>位置</label><span>${esc(p.location || '—')}</span></div>
+        <div class="detail-field"><label>光照</label><span>${esc(p.light || '—')}</span></div>
+        <div class="detail-field"><label>浇水频率</label><span>每 ${esc(p.wateringFrequencyDays || '?')} 天</span></div>
+        <div class="detail-field"><label>上次浇水</label><span>${esc(p.lastWateredDate || '未记录')}</span></div>
         <div class="detail-field"><label>浇水状态</label><span class="card-status ${s.cls}">${s.text}</span></div>
       `;
 
@@ -844,8 +880,8 @@
         : logs.map(l => `<div class="log-item">
             <div class="log-date">${l.date || ''}</div>
             <div>
-              <div class="log-action">${ACTION_MAP[l.action] || l.action}</div>
-              ${l.notes ? `<div class="log-notes-text">${l.notes}</div>` : ''}
+              <div class="log-action">${esc(ACTION_MAP[l.action] || l.action)}</div>
+              ${l.notes ? `<div class="log-notes-text">${esc(l.notes)}</div>` : ''}
             </div>
           </div>`).join('');
     }
@@ -858,10 +894,16 @@
     async function waterFromDetail() {
       if (!detailId) return;
       const t = todayStr();
-      await plantsRef.doc(detailId).update({ lastWateredDate: t });
-      await logsRef.add({ plantId: detailId, action: 'water', date: t, notes: '', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-      await loadPlants();
-      await openDetail(detailId);
+      try {
+        await plantsRef.doc(detailId).update({ lastWateredDate: t });
+        await logsRef.add({ plantId: detailId, action: 'water', date: t, notes: '', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        await loadPlants();
+        await openDetail(detailId);
+        showNotice('已记录浇水');
+      } catch (err) {
+        alert('记录失败，请稍后再试。');
+        console.error(err);
+      }
     }
 
     async function addLog() {
@@ -869,13 +911,19 @@
       const action = document.getElementById('log-action-sel').value;
       const notes  = document.getElementById('log-note-inp').value.trim();
       const t = todayStr();
-      await logsRef.add({ plantId: detailId, action, date: t, notes, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-      document.getElementById('log-note-inp').value = '';
-      if (action === 'water') {
-        await plantsRef.doc(detailId).update({ lastWateredDate: t });
-        await loadPlants();
+      try {
+        await logsRef.add({ plantId: detailId, action, date: t, notes, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        document.getElementById('log-note-inp').value = '';
+        if (action === 'water') {
+          await plantsRef.doc(detailId).update({ lastWateredDate: t });
+          await loadPlants();
+        }
+        await loadLogs(detailId);
+        showNotice('已保存记录');
+      } catch (err) {
+        alert('保存失败，请稍后再试。');
+        console.error(err);
       }
-      await loadLogs(detailId);
     }
 
     // ── Growth photos ──
@@ -898,9 +946,9 @@
       grid.innerHTML = photos.map(p => `
         <div>
           <div class="growth-thumb" onclick="openLightbox('${p.id}')">
-            <img src="${p.thumbBase64 || p.base64}" alt="${p.date}">
+            <img src="${safeImageSrc(p.thumbBase64) || safeImageSrc(p.base64)}" alt="${esc(p.date)}">
           </div>
-          <div class="growth-date">${formatGrowthDate(p.date)}</div>
+          <div class="growth-date">${esc(formatGrowthDate(p.date))}</div>
         </div>
       `).join('');
       // store photos for lightbox lookup
@@ -915,18 +963,24 @@
       const file = e.target.files[0];
       if (!file || !detailId) return;
       const [base64, thumbBase64] = await Promise.all([
-        compressImage(file, 1200, 0.78),
-        compressImage(file, 200,  0.55),
+        compressImage(file, 900, 0.68),
+        compressImage(file, 180, 0.5),
       ]);
-      await growthRef.add({
-        plantId: detailId,
-        base64,
-        thumbBase64,
-        date: todayStr(),
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      e.target.value = '';
-      await loadGrowthPhotos(detailId);
+      try {
+        await growthRef.add({
+          plantId: detailId,
+          base64,
+          thumbBase64,
+          date: todayStr(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        e.target.value = '';
+        await loadGrowthPhotos(detailId);
+        showNotice('照片已添加');
+      } catch (err) {
+        alert('照片保存失败，请换一张小一点的图片再试。');
+        console.error(err);
+      }
     }
 
     function openLightbox(photoId) {
@@ -934,7 +988,7 @@
       const photos = grid._photos || [];
       const p = photos.find(x => x.id === photoId);
       if (!p) return;
-      document.getElementById('lightbox-img').src = p.base64;
+      document.getElementById('lightbox-img').src = safeImageSrc(p.base64);
       document.getElementById('lightbox').classList.add('open');
     }
 
@@ -951,11 +1005,17 @@
     async function handlePhotoUpload(e) {
       const file = e.target.files[0];
       if (!file || !detailId) return;
-      const base64 = await compressImage(file);
-      await plantsRef.doc(detailId).update({ photoBase64: base64 });
-      await loadPlants();
-      await openDetail(detailId);
-      e.target.value = '';
+      const base64 = await compressImage(file, 640, 0.68);
+      try {
+        await plantsRef.doc(detailId).update({ photoBase64: base64 });
+        await loadPlants();
+        await openDetail(detailId);
+        e.target.value = '';
+        showNotice('照片已更新');
+      } catch (err) {
+        alert('照片保存失败，请换一张小一点的图片再试。');
+        console.error(err);
+      }
     }
 
     // ── Form Modal ──
@@ -1006,10 +1066,18 @@
         lastWateredDate:       document.getElementById('f-watered').value || null,
         notes:                 document.getElementById('f-notes').value.trim(),
       };
-      if (editId) {
-        await plantsRef.doc(editId).update(data);
-      } else {
-        await plantsRef.add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      try {
+        if (editId) {
+          await plantsRef.doc(editId).update(data);
+          showNotice('已保存修改');
+        } else {
+          await plantsRef.add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+          showNotice('已添加植物');
+        }
+      } catch (err) {
+        alert('保存失败，请稍后再试。');
+        console.error(err);
+        return;
       }
       closeForm();
       await loadPlants();
@@ -1022,6 +1090,7 @@
       closeForm();
       closeDetail();
       await loadPlants();
+      showNotice('已删除植物');
     }
 
     async function confirmDeleteFromDetail() {
@@ -1029,6 +1098,7 @@
       await plantsRef.doc(detailId).delete();
       closeDetail();
       await loadPlants();
+      showNotice('已删除植物');
     }
 
     // backdrop click
