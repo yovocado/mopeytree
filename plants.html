@@ -102,6 +102,45 @@
       opacity: 0.4;
     }
 
+    .plant-tools {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .plant-tool {
+      min-width: 0;
+    }
+
+    .plant-tool label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.38rem;
+      color: var(--faint);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .plant-tool input,
+    .plant-tool select {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid rgba(184,179,168,0.75);
+      color: var(--text);
+      font-family: 'EB Garamond', serif;
+      font-size: 0.88rem;
+      padding: 7px 9px;
+      outline: none;
+      border-radius: 0;
+    }
+
+    .plant-tool input:focus,
+    .plant-tool select:focus {
+      border-color: var(--muted);
+    }
+
     .plant-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -502,6 +541,16 @@
       line-height: 1.4;
     }
 
+    .growth-caption {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-style: italic;
+      text-align: center;
+      line-height: 1.35;
+      margin-top: 2px;
+      overflow-wrap: anywhere;
+    }
+
     .growth-upload-btn {
       font-family: 'Space Mono', monospace;
       font-size: 0.42rem;
@@ -527,15 +576,43 @@
       display: none;
       align-items: center;
       justify-content: center;
+      flex-direction: column;
       padding: 20px;
     }
     .lightbox.open { display: flex; }
 
     .lightbox img {
       max-width: 100%;
-      max-height: 90vh;
+      max-height: 62vh;
       object-fit: contain;
       box-shadow: 0 4px 40px rgba(0,0,0,0.4);
+    }
+
+    .lightbox-panel {
+      width: min(420px, 100%);
+      margin-top: 16px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .lightbox-caption-input,
+    .lightbox-date-input {
+      width: 100%;
+      background: rgba(250,248,243,0.92);
+      border: 1px solid rgba(184,179,168,0.8);
+      color: var(--text);
+      font-family: 'EB Garamond', serif;
+      font-size: 0.95rem;
+      padding: 7px 9px;
+      outline: none;
+      border-radius: 0;
+    }
+
+    .lightbox-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
     }
 
     .lightbox-close {
@@ -555,6 +632,7 @@
     @media (max-width: 600px) {
       .page-header { padding: 24px 20px 0; }
       .section      { padding: 22px 20px 0; }
+      .plant-tools  { grid-template-columns: 1fr 1fr; }
       .plant-grid   { grid-template-columns: 1fr 1fr; gap: 10px; }
       .detail-body  { padding: 16px 18px 20px; }
       .detail-fields { grid-template-columns: 1fr; }
@@ -562,6 +640,7 @@
       .form-row     { grid-template-columns: 1fr; }
     }
     @media (max-width: 360px) {
+      .plant-tools { grid-template-columns: 1fr; }
       .plant-grid { grid-template-columns: 1fr; }
     }
   </style>
@@ -573,11 +652,39 @@
       <a href="index.html" class="back">← mopeytree</a>
       <h1 class="page-title">plants</h1>
     </div>
-    <button class="add-btn" onclick="openAddModal()">+ 添加植物</button>
+    <button class="add-btn" onclick="openAddModal()" aria-label="添加植物">+ 添加植物</button>
   </header>
 
   <div class="section">
     <div class="section-label">所有植物</div>
+    <div class="plant-tools" aria-label="植物筛选和排序">
+      <div class="plant-tool">
+        <label for="plant-search">搜索</label>
+        <input type="search" id="plant-search" placeholder="名称 / 位置 / 备注" oninput="renderGrid()">
+      </div>
+      <div class="plant-tool">
+        <label for="group-filter">分组</label>
+        <select id="group-filter" onchange="renderGrid()">
+          <option value="">全部分组</option>
+        </select>
+      </div>
+      <div class="plant-tool">
+        <label for="location-filter">位置</label>
+        <select id="location-filter" onchange="renderGrid()">
+          <option value="">全部位置</option>
+        </select>
+      </div>
+      <div class="plant-tool">
+        <label for="sort-mode">排序</label>
+        <select id="sort-mode" onchange="renderGrid()">
+          <option value="due">逾期优先</option>
+          <option value="next">下次浇水</option>
+          <option value="name">名称</option>
+          <option value="group">分组</option>
+          <option value="location">位置</option>
+        </select>
+      </div>
+    </div>
     <div class="plant-grid" id="plant-grid">
       <div class="loading">loading...</div>
     </div>
@@ -586,16 +693,16 @@
   <div class="bottom-spacer"></div>
 
   <!-- ── DETAIL MODAL ── -->
-  <div class="modal-backdrop" id="detail-modal">
-    <div class="modal">
-      <button class="modal-close" onclick="closeDetail()">✕</button>
+  <div class="modal-backdrop" id="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-name">
+    <div class="modal" tabindex="-1" id="detail-dialog">
+      <button class="modal-close" onclick="closeDetail()" aria-label="关闭植物详情">✕</button>
 
       <div class="detail-photo-wrap" id="detail-photo-wrap">
-        <div class="detail-photo-placeholder" onclick="triggerPhotoUpload()" id="detail-photo-placeholder">
+        <div class="detail-photo-placeholder" onclick="triggerPhotoUpload()" id="detail-photo-placeholder" role="button" tabindex="0" aria-label="上传植物照片">
           <span>点击上传照片</span>
         </div>
         <img class="detail-photo" id="detail-photo-img" src="" alt="" style="display:none">
-        <button class="photo-upload-btn" onclick="triggerPhotoUpload()" id="photo-change-btn" style="display:none">更换照片</button>
+        <button class="photo-upload-btn" onclick="triggerPhotoUpload()" id="photo-change-btn" style="display:none" aria-label="更换植物照片">更换照片</button>
       </div>
       <input type="file" id="photo-file-input" accept="image/*" onchange="handlePhotoUpload(event)">
 
@@ -605,7 +712,7 @@
             <div class="detail-name" id="detail-name"></div>
             <div class="detail-group" id="detail-group"></div>
           </div>
-          <button class="water-now-btn" onclick="waterFromDetail()">已浇水</button>
+          <button class="water-now-btn" onclick="waterFromDetail()" aria-label="记录今天已浇水">已浇水</button>
         </div>
 
         <div class="detail-fields" id="detail-fields"></div>
@@ -619,7 +726,7 @@
         <div class="growth-section">
           <div class="log-label">成长记录</div>
           <div class="growth-grid" id="growth-grid"></div>
-          <button class="growth-upload-btn" onclick="triggerGrowthUpload()">+ 添加照片</button>
+          <button class="growth-upload-btn" onclick="triggerGrowthUpload()" aria-label="添加成长照片">+ 添加照片</button>
           <input type="file" id="growth-file-input" accept="image/*" onchange="handleGrowthUpload(event)">
         </div>
 
@@ -644,9 +751,9 @@
   </div>
 
   <!-- ── ADD / EDIT FORM MODAL ── -->
-  <div class="modal-backdrop" id="form-modal">
-    <div class="modal" style="max-width:460px">
-      <button class="modal-close" onclick="closeForm()">✕</button>
+  <div class="modal-backdrop" id="form-modal" role="dialog" aria-modal="true" aria-labelledby="form-title">
+    <div class="modal" style="max-width:460px" tabindex="-1" id="form-dialog">
+      <button class="modal-close" onclick="closeForm()" aria-label="关闭表单">✕</button>
       <div class="form-modal-inner">
         <h2 class="form-modal-title" id="form-title">添加植物</h2>
         <form onsubmit="submitForm(event)">
@@ -693,9 +800,17 @@
   </div>
 
   <!-- ── LIGHTBOX ── -->
-  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <button class="lightbox-close" onclick="closeLightbox()">✕ 关闭</button>
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()" role="dialog" aria-modal="true" aria-label="成长照片预览">
+    <button class="lightbox-close" onclick="closeLightbox()" aria-label="关闭照片预览">✕ 关闭</button>
     <img id="lightbox-img" src="" alt="">
+    <div class="lightbox-panel" onclick="event.stopPropagation()">
+      <input class="lightbox-date-input" id="lightbox-date" type="date" aria-label="成长照片日期">
+      <textarea class="lightbox-caption-input" id="lightbox-caption" rows="2" placeholder="给这张成长照片加一点备注…" aria-label="成长照片备注"></textarea>
+      <div class="lightbox-actions">
+        <button class="btn btn-dark" onclick="saveGrowthPhotoMeta()">保存</button>
+        <button class="btn btn-danger" onclick="deleteGrowthPhoto()">删除照片</button>
+      </div>
+    </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -717,6 +832,7 @@
     let plants = [];
     let editId   = null;
     let detailId = null;
+    let currentGrowthPhotoId = null;
 
     const todayStr = () => {
       const d = new Date();
@@ -752,6 +868,54 @@
       notice.textContent = message;
       clearTimeout(showNotice._timer);
       showNotice._timer = setTimeout(() => notice.remove(), 2200);
+    }
+
+    function setSelectOptions(selectId, values, fallbackText) {
+      const select = document.getElementById(selectId);
+      const current = select.value;
+      select.innerHTML = `<option value="">${fallbackText}</option>` +
+        values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+      if (values.includes(current)) select.value = current;
+    }
+
+    function refreshFilters() {
+      const groups = [...new Set(plants.map(p => p.group).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'));
+      const locations = [...new Set(plants.map(p => p.location).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'));
+      setSelectOptions('group-filter', groups, '全部分组');
+      setSelectOptions('location-filter', locations, '全部位置');
+    }
+
+    function nextWaterDate(plant) {
+      if (!plant.lastWateredDate) return null;
+      const next = new Date(plant.lastWateredDate + 'T00:00:00');
+      next.setDate(next.getDate() + (plant.wateringFrequencyDays || 7));
+      return next;
+    }
+
+    function filteredPlants() {
+      const q = document.getElementById('plant-search').value.trim().toLowerCase();
+      const group = document.getElementById('group-filter').value;
+      const location = document.getElementById('location-filter').value;
+      const sortMode = document.getElementById('sort-mode').value;
+      const haystack = p => [p.name, p.group, p.location, p.light, p.notes].join(' ').toLowerCase();
+
+      return plants
+        .filter(p => !q || haystack(p).includes(q))
+        .filter(p => !group || p.group === group)
+        .filter(p => !location || p.location === location)
+        .sort((a, b) => {
+          if (sortMode === 'name') return (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN');
+          if (sortMode === 'group') return (a.group || '').localeCompare(b.group || '', 'zh-Hans-CN') || (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN');
+          if (sortMode === 'location') return (a.location || '').localeCompare(b.location || '', 'zh-Hans-CN') || (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN');
+          const aDays = getDays(a);
+          const bDays = getDays(b);
+          if (sortMode === 'next') {
+            const aTime = nextWaterDate(a)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+            const bTime = nextWaterDate(b)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+            return aTime - bTime || (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN');
+          }
+          return aDays - bDays || (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN');
+        });
     }
 
     const ACTION_MAP = { water:'浇水', fertilize:'施肥', repot:'换盆', trim:'修剪', move:'移位', note:'备注' };
@@ -795,6 +959,7 @@
     async function loadPlants() {
       const snap = await plantsRef.orderBy('name').get();
       plants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      refreshFilters();
       renderGrid();
     }
 
@@ -804,7 +969,12 @@
         grid.innerHTML = `<p class="empty" style="grid-column:1/-1">还没有植物，点右上角添加</p>`;
         return;
       }
-      grid.innerHTML = plants.map(p => {
+      const visiblePlants = filteredPlants();
+      if (!visiblePlants.length) {
+        grid.innerHTML = `<p class="empty" style="grid-column:1/-1">没有符合条件的植物</p>`;
+        return;
+      }
+      grid.innerHTML = visiblePlants.map(p => {
         const s = statusInfo(getDays(p));
         const photoSrc = safeImageSrc(p.photoBase64);
         const photo = photoSrc
@@ -865,6 +1035,7 @@
       await loadGrowthPhotos(plantId);
       await loadLogs(plantId);
       document.getElementById('detail-modal').classList.add('open');
+      document.getElementById('detail-dialog').focus();
     }
 
     async function loadLogs(plantId) {
@@ -941,6 +1112,7 @@
       const grid = document.getElementById('growth-grid');
       if (!photos.length) {
         grid.innerHTML = `<p class="empty" style="grid-column:1/-1;font-size:0.4rem">还没有成长照片</p>`;
+        grid._photos = [];
         return;
       }
       grid.innerHTML = photos.map(p => `
@@ -949,6 +1121,7 @@
             <img src="${safeImageSrc(p.thumbBase64) || safeImageSrc(p.base64)}" alt="${esc(p.date)}">
           </div>
           <div class="growth-date">${esc(formatGrowthDate(p.date))}</div>
+          ${p.caption ? `<div class="growth-caption">${esc(p.caption)}</div>` : ''}
         </div>
       `).join('');
       // store photos for lightbox lookup
@@ -972,6 +1145,7 @@
           base64,
           thumbBase64,
           date: todayStr(),
+          caption: '',
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         e.target.value = '';
@@ -988,13 +1162,46 @@
       const photos = grid._photos || [];
       const p = photos.find(x => x.id === photoId);
       if (!p) return;
+      currentGrowthPhotoId = photoId;
       document.getElementById('lightbox-img').src = safeImageSrc(p.base64);
+      document.getElementById('lightbox-date').value = p.date || todayStr();
+      document.getElementById('lightbox-caption').value = p.caption || '';
       document.getElementById('lightbox').classList.add('open');
+      document.getElementById('lightbox-caption').focus();
     }
 
     function closeLightbox() {
       document.getElementById('lightbox').classList.remove('open');
       document.getElementById('lightbox-img').src = '';
+      currentGrowthPhotoId = null;
+    }
+
+    async function saveGrowthPhotoMeta() {
+      if (!currentGrowthPhotoId) return;
+      const date = document.getElementById('lightbox-date').value || todayStr();
+      const caption = document.getElementById('lightbox-caption').value.trim();
+      try {
+        await growthRef.doc(currentGrowthPhotoId).update({ date, caption });
+        await loadGrowthPhotos(detailId);
+        showNotice('成长记录已保存');
+        closeLightbox();
+      } catch (err) {
+        alert('保存失败，请稍后再试。');
+        console.error(err);
+      }
+    }
+
+    async function deleteGrowthPhoto() {
+      if (!currentGrowthPhotoId || !confirm('删除这张成长照片吗？')) return;
+      try {
+        await growthRef.doc(currentGrowthPhotoId).delete();
+        await loadGrowthPhotos(detailId);
+        showNotice('成长照片已删除');
+        closeLightbox();
+      } catch (err) {
+        alert('删除失败，请稍后再试。');
+        console.error(err);
+      }
     }
 
     // ── Photo upload ──
@@ -1032,6 +1239,8 @@
       document.getElementById('f-delete-btn').style.display = 'none';
       document.getElementById('f-submit-btn').textContent   = '保存';
       document.getElementById('form-modal').classList.add('open');
+      document.getElementById('form-dialog').focus();
+      setTimeout(() => document.getElementById('f-name').focus(), 0);
     }
 
     function openEditFromDetail() {
@@ -1049,6 +1258,8 @@
       document.getElementById('f-delete-btn').style.display = 'block';
       document.getElementById('f-submit-btn').textContent   = '保存修改';
       document.getElementById('form-modal').classList.add('open');
+      document.getElementById('form-dialog').focus();
+      setTimeout(() => document.getElementById('f-name').focus(), 0);
     }
 
     function closeForm() {
@@ -1086,24 +1297,57 @@
 
     async function confirmDelete() {
       if (!editId || !confirm('确定删除这盆植物吗？')) return;
-      await plantsRef.doc(editId).delete();
-      closeForm();
-      closeDetail();
-      await loadPlants();
-      showNotice('已删除植物');
+      await deletePlantAndRelated(editId);
     }
 
     async function confirmDeleteFromDetail() {
       if (!detailId || !confirm('确定删除这盆植物吗？')) return;
-      await plantsRef.doc(detailId).delete();
-      closeDetail();
-      await loadPlants();
-      showNotice('已删除植物');
+      await deletePlantAndRelated(detailId);
+    }
+
+    async function deleteQuerySnapshot(snap) {
+      const batchSize = 400;
+      for (let i = 0; i < snap.docs.length; i += batchSize) {
+        const batch = db.batch();
+        snap.docs.slice(i, i + batchSize).forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+      }
+    }
+
+    async function deletePlantAndRelated(plantId) {
+      try {
+        const [logsSnap, growthSnap] = await Promise.all([
+          logsRef.where('plantId', '==', plantId).get(),
+          growthRef.where('plantId', '==', plantId).get(),
+        ]);
+        await deleteQuerySnapshot(logsSnap);
+        await deleteQuerySnapshot(growthSnap);
+        await plantsRef.doc(plantId).delete();
+        closeForm();
+        closeDetail();
+        await loadPlants();
+        showNotice('已删除植物和关联记录');
+      } catch (err) {
+        alert('删除失败，请稍后再试。');
+        console.error(err);
+      }
     }
 
     // backdrop click
     document.getElementById('detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeDetail(); });
     document.getElementById('form-modal').addEventListener('click',   e => { if (e.target === e.currentTarget) closeForm(); });
+    document.getElementById('detail-photo-placeholder').addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        triggerPhotoUpload();
+      }
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      if (document.getElementById('lightbox').classList.contains('open')) closeLightbox();
+      else if (document.getElementById('form-modal').classList.contains('open')) closeForm();
+      else if (document.getElementById('detail-modal').classList.contains('open')) closeDetail();
+    });
 
     // document-level card click — catches everything regardless of z-index
     document.addEventListener('click', e => {
