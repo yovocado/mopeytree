@@ -8,29 +8,27 @@
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #edf7fb;
-      --paper: rgba(249, 252, 250, 0.76);
-      --paper-strong: rgba(249, 252, 250, 0.9);
-      --text: #1f2b34;
-      --muted: #637482;
-      --faint: #a6b5bd;
-      --card: rgba(249,252,250,0.78);
+      --bg: #edeae2;
+      --paper: rgba(245, 242, 234, 0.84);
+      --paper-strong: rgba(250, 248, 243, 0.94);
+      --text: #1c1810;
+      --muted: #8c8679;
+      --faint: #b8b3a8;
+      --card: rgba(250,248,243,0.86);
       --overdue:   #d17758;
       --due-today: #c9ab55;
       --due-soon:  #8ca37d;
       --ok:        #a9b29f;
       --mist: rgba(255,255,255,0.72);
-      --line: rgba(99, 116, 130, 0.18);
+      --line: rgba(117, 106, 84, 0.16);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       background:
-        linear-gradient(90deg, rgba(245,249,250,0.12), rgba(245,249,250,0.58) 46%, rgba(245,249,250,0.14)),
-        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.42) 76%, rgba(255,255,255,0.66)),
-        url('assets/mopeytree-liminal-bg.png') center top / cover fixed no-repeat,
-        #edf7fb;
+        radial-gradient(circle at 82% 12%, rgba(255,255,255,0.42), rgba(255,255,255,0) 30%),
+        linear-gradient(115deg, #f3f0e8 0%, #edeae2 54%, #e8e4da 100%);
       color: var(--text);
       font-family: 'EB Garamond', Georgia, serif;
       min-height: 100vh;
@@ -38,15 +36,7 @@
     }
 
     body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(ellipse at 50% 38%, rgba(255,255,255,0.42), rgba(255,255,255,0.12) 42%, rgba(255,255,255,0) 72%),
-        linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.24));
-      opacity: 0.66;
-      pointer-events: none;
-      z-index: 0;
+      display: none;
     }
 
     body::after {
@@ -854,10 +844,8 @@
     @media (max-width: 600px) {
       body {
         background:
-          linear-gradient(90deg, rgba(245,249,250,0.18), rgba(245,249,250,0.68) 52%, rgba(245,249,250,0.22)),
-          linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.58) 70%, rgba(255,255,255,0.74)),
-          url('assets/mopeytree-liminal-bg.png') 42% top / cover no-repeat,
-          #edf7fb;
+          radial-gradient(circle at 82% 12%, rgba(255,255,255,0.42), rgba(255,255,255,0) 30%),
+          linear-gradient(115deg, #f3f0e8 0%, #edeae2 54%, #e8e4da 100%);
       }
       .page-header {
         padding: 26px 20px 0;
