@@ -8,13 +8,13 @@
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #edeae2;
-      --paper: rgba(245, 242, 234, 0.84);
-      --paper-strong: rgba(250, 248, 243, 0.94);
+      --bg: #dfe6dc;
+      --paper: rgba(238, 241, 234, 0.84);
+      --paper-strong: rgba(244, 246, 240, 0.94);
       --text: #1c1810;
       --muted: #8c8679;
       --faint: #b8b3a8;
-      --card: rgba(250,248,243,0.86);
+      --card: rgba(244,246,240,0.86);
       --overdue:   #d17758;
       --due-today: #c9ab55;
       --due-soon:  #8ca37d;
@@ -27,9 +27,9 @@
 
     body {
       background:
-        radial-gradient(circle at 82% 12%, rgba(255,255,255,0.48), rgba(255,255,255,0) 30%),
-        radial-gradient(circle at 12% 78%, rgba(255,255,255,0.28), rgba(255,255,255,0) 36%),
-        linear-gradient(135deg, #e8ece2 0%, #e7eff0 58%, #edf3ea 100%);
+        radial-gradient(circle at 82% 12%, rgba(255,255,255,0.26), rgba(255,255,255,0) 30%),
+        radial-gradient(circle at 12% 78%, rgba(255,255,255,0.16), rgba(255,255,255,0) 36%),
+        linear-gradient(135deg, #dce5da 0%, #d8e4e5 58%, #e2e8dc 100%);
       color: var(--text);
       font-family: 'EB Garamond', Georgia, serif;
       min-height: 100vh;
@@ -66,8 +66,8 @@
       top: -120px;
       width: 520px;
       height: 520px;
-      background: radial-gradient(circle, rgba(255,255,255,0.86), rgba(241,220,166,0.2) 34%, rgba(255,255,255,0) 68%);
-      opacity: 0.9;
+      background: radial-gradient(circle, rgba(255,255,255,0.48), rgba(224,207,160,0.14) 34%, rgba(255,255,255,0) 68%);
+      opacity: 0.64;
     }
 
     .dream-lines {
@@ -75,7 +75,7 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      opacity: 0.58;
+      opacity: 0.48;
     }
 
     .dream-lines .tree-line,
@@ -107,7 +107,7 @@
     }
 
     .dream-lines .mist-dot {
-      fill: rgba(255,255,255,0.58);
+      fill: rgba(255,255,255,0.34);
     }
 
     .dream-lines .warm-dot {
@@ -127,10 +127,10 @@
       top: 90px;
       width: 360px;
       height: 520px;
-      opacity: 0.11;
+      opacity: 0.08;
       background:
         radial-gradient(ellipse at 70% 14%, rgba(93,104,84,0.24), rgba(93,104,84,0) 56%),
-        radial-gradient(ellipse at 12% 72%, rgba(255,255,255,0.72), rgba(255,255,255,0) 58%);
+        radial-gradient(ellipse at 12% 72%, rgba(255,255,255,0.42), rgba(255,255,255,0) 58%);
       filter: blur(18px);
     }
 
@@ -155,30 +155,30 @@
           rgba(255,142,172,0) 100%);
       filter: blur(14px);
       mix-blend-mode: screen;
-      opacity: 0.58;
+      opacity: 0.36;
       transform: rotate(-16deg);
     }
     .rainbow-sheen.r1 { right: 13vw; top: 52px; }
-    .rainbow-sheen.r2 { left: 7vw; bottom: 9vh; width: 300px; height: 120px; opacity: 0.26; transform: rotate(-28deg); }
+    .rainbow-sheen.r2 { left: 7vw; bottom: 9vh; width: 300px; height: 120px; opacity: 0.18; transform: rotate(-28deg); }
 
     .dream-bubble {
-      border: 1px solid rgba(255,255,255,0.74);
+      border: 1px solid rgba(255,255,255,0.44);
       border-radius: 50%;
       background:
-        radial-gradient(circle at 28% 22%, rgba(255,255,255,0.86), rgba(255,255,255,0.18) 18%, rgba(255,255,255,0) 32%),
+        radial-gradient(circle at 28% 22%, rgba(255,255,255,0.58), rgba(255,255,255,0.12) 18%, rgba(255,255,255,0) 32%),
         radial-gradient(circle at 72% 74%, rgba(190,232,223,0.26), rgba(255,255,255,0) 46%),
         linear-gradient(135deg, rgba(255,174,207,0.16), rgba(146,214,241,0.14));
       box-shadow:
-        inset 5px 8px 16px rgba(255,255,255,0.24),
+        inset 5px 8px 16px rgba(255,255,255,0.16),
         inset -7px -8px 18px rgba(110,132,124,0.08),
-        0 0 18px rgba(255,255,255,0.34);
-      opacity: 0.66;
+        0 0 18px rgba(255,255,255,0.2);
+      opacity: 0.46;
       animation: bubble-drift 14s ease-in-out infinite alternate;
     }
     .dream-bubble.bu1 { width: 58px; height: 58px; right: 19vw; top: 152px; animation-delay: -2s; }
-    .dream-bubble.bu2 { width: 34px; height: 34px; right: 9vw; top: 244px; opacity: 0.48; animation-delay: -6s; }
-    .dream-bubble.bu3 { width: 24px; height: 24px; right: 23vw; top: 284px; opacity: 0.42; animation-delay: -9s; }
-    .dream-bubble.bu4 { width: 44px; height: 44px; left: 6vw; bottom: 98px; opacity: 0.28; animation-delay: -4s; }
+    .dream-bubble.bu2 { width: 34px; height: 34px; right: 9vw; top: 244px; opacity: 0.34; animation-delay: -6s; }
+    .dream-bubble.bu3 { width: 24px; height: 24px; right: 23vw; top: 284px; opacity: 0.3; animation-delay: -9s; }
+    .dream-bubble.bu4 { width: 44px; height: 44px; left: 6vw; bottom: 98px; opacity: 0.2; animation-delay: -4s; }
 
     .star-charm {
       width: var(--s, 22px);
@@ -186,9 +186,9 @@
       background: var(--fill, rgba(255,214,105,0.34));
       clip-path: polygon(50% 0%, 61% 34%, 97% 34%, 68% 55%, 79% 91%, 50% 69%, 21% 91%, 32% 55%, 3% 34%, 39% 34%);
       filter:
-        drop-shadow(0 0 4px rgba(255,255,255,0.58))
+        drop-shadow(0 0 4px rgba(255,255,255,0.34))
         drop-shadow(0 0 8px rgba(243,218,128,0.18));
-      opacity: 0.58;
+      opacity: 0.44;
       transform: rotate(var(--rot, 0deg));
     }
     .star-charm.st1 { --s: 28px; --rot: -12deg; --fill: rgba(255,213,98,0.32); right: 15vw; top: 202px; }
@@ -206,19 +206,19 @@
         radial-gradient(ellipse at 92% 50%, rgba(249,151,181,0.24) 0 20%, rgba(255,255,255,0) 22%),
         radial-gradient(ellipse at 50% 93%, rgba(249,151,181,0.22) 0 20%, rgba(255,255,255,0) 22%),
         radial-gradient(ellipse at 8% 50%, rgba(249,151,181,0.24) 0 20%, rgba(255,255,255,0) 22%);
-      filter: blur(0.2px) drop-shadow(0 0 10px rgba(255,255,255,0.36));
-      opacity: 0.62;
+      filter: blur(0.2px) drop-shadow(0 0 10px rgba(255,255,255,0.22));
+      opacity: 0.42;
       transform: rotate(-18deg);
     }
     .flower-glow.f1 { right: 30vw; top: 64px; }
-    .flower-glow.f2 { right: 4vw; top: 420px; width: 38px; height: 38px; opacity: 0.36; }
+    .flower-glow.f2 { right: 4vw; top: 420px; width: 38px; height: 38px; opacity: 0.24; }
 
     .seed {
       position: absolute;
       width: 1px;
       height: 28px;
       background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(235,224,178,0.9), rgba(255,255,255,0));
-      opacity: 0.62;
+      opacity: 0.46;
       transform: rotate(var(--r, -18deg));
       animation: drift 12s ease-in-out infinite alternate;
     }
@@ -231,7 +231,7 @@
       height: 16px;
       border-top: 1px solid rgba(255,255,255,0.9);
       border-radius: 50%;
-      filter: drop-shadow(0 0 7px rgba(255,255,255,0.7));
+      filter: drop-shadow(0 0 7px rgba(255,255,255,0.42));
     }
     .seed.s1 { left: 35%; top: 58px; --r: -20deg; animation-delay: -3s; }
     .seed.s2 { left: 92%; top: 34%; --r: 26deg; animation-delay: -7s; }
@@ -372,7 +372,7 @@
       font-style: italic;
       font-weight: 400;
       color: #59614b;
-      text-shadow: 0 12px 44px rgba(255,255,255,0.78);
+      text-shadow: 0 12px 36px rgba(255,255,255,0.42);
       line-height: 0.9;
     }
 
@@ -453,8 +453,8 @@
 
     /* ── PLANT CARD ── */
     .plant-card {
-      background: rgba(250,248,243,0.82);
-      border: 1px solid rgba(255,255,255,0.58);
+      background: rgba(244,246,240,0.84);
+      border: 1px solid rgba(255,255,255,0.34);
       cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s;
       overflow: hidden;
@@ -477,7 +477,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.34), rgba(255,255,255,0) 42%);
+      background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0) 42%);
       pointer-events: none;
     }
     .plant-card:hover {
@@ -967,8 +967,8 @@
     @media (max-width: 600px) {
       body {
         background:
-          radial-gradient(circle at 82% 12%, rgba(255,255,255,0.44), rgba(255,255,255,0) 32%),
-          linear-gradient(135deg, #e8ece2 0%, #e7eff0 64%, #edf3ea 100%);
+          radial-gradient(circle at 82% 12%, rgba(255,255,255,0.24), rgba(255,255,255,0) 32%),
+          linear-gradient(135deg, #dce5da 0%, #d8e4e5 64%, #e2e8dc 100%);
       }
       .page-header {
         padding: 26px 20px 0;
