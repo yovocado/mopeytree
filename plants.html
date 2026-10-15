@@ -580,19 +580,46 @@
       letter-spacing: 0.1em;
     }
 
-    .card-body { padding: 12px 14px 14px; position: relative; z-index: 1; }
-
-    .card-name { font-size: 1.08rem; font-style: italic; margin-bottom: 3px; color: #343927; }
-
-    .card-group {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.4rem;
-      color: var(--faint);
-      letter-spacing: 0.1em;
-      margin-bottom: 6px;
+    .card-body {
+      min-height: 142px;
+      padding: 14px 15px 15px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1;
     }
 
-    .card-location { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
+    .card-name {
+      font-size: 1.12rem;
+      line-height: 1.18;
+      font-style: italic;
+      margin-bottom: 5px;
+      color: #343927;
+    }
+
+    .card-names {
+      color: #64776f;
+      font-size: 0.72rem;
+      line-height: 1.35;
+      margin-bottom: 11px;
+      overflow-wrap: anywhere;
+    }
+
+    .name-separator {
+      color: var(--faint);
+      padding: 0 5px;
+    }
+
+    .card-fact {
+      color: var(--muted);
+      font-size: 0.76rem;
+      line-height: 1.5;
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+    }
 
     .card-status {
       font-family: 'Space Mono', monospace;
@@ -600,6 +627,8 @@
       letter-spacing: 0.07em;
       padding: 2px 7px;
       display: inline-block;
+      align-self: flex-start;
+      margin-top: auto;
     }
     .card-status.overdue   { background: rgba(242,224,216,0.82); color: #9a4a31; border-radius: 999px; }
     .card-status.due-today { background: rgba(238,232,216,0.82); color: #7a6028; border-radius: 999px; }
@@ -721,13 +750,27 @@
       padding-right: 32px;
     }
 
-    .detail-name { font-size: 1.5rem; font-style: italic; }
+    .detail-name { font-size: 1.5rem; font-style: italic; line-height: 1.1; }
+    .detail-names {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.35;
+      margin-top: 5px;
+      overflow-wrap: anywhere;
+    }
+    .detail-fact {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.55;
+      margin-top: 10px;
+      max-width: 34em;
+    }
     .detail-group {
       font-family: 'Space Mono', monospace;
       font-size: 0.42rem;
       color: var(--faint);
       letter-spacing: 0.1em;
-      margin-top: 3px;
+      margin-top: 8px;
     }
 
     .water-now-btn {
@@ -1247,6 +1290,8 @@
         <div class="detail-header">
           <div>
             <div class="detail-name" id="detail-name"></div>
+            <div class="detail-names" id="detail-names"></div>
+            <div class="detail-fact" id="detail-fact"></div>
             <div class="detail-group" id="detail-group"></div>
           </div>
           <button class="water-now-btn" onclick="waterFromDetail()" aria-label="记录今天已浇水">已浇水</button>
@@ -1297,6 +1342,20 @@
           <div class="form-group">
             <label class="form-label">名称</label>
             <input class="form-input" type="text" id="f-name" required placeholder="例：龟背竹">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">英文名</label>
+              <input class="form-input" type="text" id="f-english" placeholder="例：Monstera deliciosa">
+            </div>
+            <div class="form-group">
+              <label class="form-label">日文名</label>
+              <input class="form-input" type="text" id="f-japanese" placeholder="例：モンステラ">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">植物小知识</label>
+            <textarea class="form-textarea" id="f-fact" maxlength="120" rows="2" placeholder="例：叶片会随着光线寻找更好的位置"></textarea>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -1535,6 +1594,16 @@
       const items = visiblePlants();
       grid.innerHTML = items.map(p => {
         const s = statusInfo(getDays(p));
+        const extraNames = [p.englishName, p.japaneseName]
+          .map(value => String(value || '').trim())
+          .filter(Boolean)
+          .map(value => esc(value));
+        const namesMarkup = extraNames.length
+          ? `<div class="card-names">${extraNames.join('<span class="name-separator" aria-hidden="true">·</span>')}</div>`
+          : '';
+        const factMarkup = String(p.fact || '').trim()
+          ? `<div class="card-fact">${esc(p.fact)}</div>`
+          : '';
         const photoSrc = safeImageSrc(p.photoBase64);
         const photo = photoSrc
           ? `<img class="card-photo" src="${photoSrc}" alt="${esc(p.name)}">`
@@ -1543,8 +1612,8 @@
           ${photo}
           <div class="card-body">
             <div class="card-name">${esc(p.name)}</div>
-            <div class="card-group">${esc(p.group || '')}</div>
-            <div class="card-location">${esc(p.location || '')}</div>
+            ${namesMarkup}
+            ${factMarkup}
             <span class="card-status ${s.cls}">${s.text}</span>
           </div>
         </div>`;
@@ -1560,7 +1629,20 @@
       if (!p) return;
 
       document.getElementById('detail-name').textContent  = p.name;
-      document.getElementById('detail-group').textContent = p.group || '';
+      const detailNames = [p.englishName, p.japaneseName]
+        .map(value => String(value || '').trim())
+        .filter(Boolean)
+        .join(' · ');
+      const namesEl = document.getElementById('detail-names');
+      namesEl.textContent = detailNames;
+      namesEl.style.display = detailNames ? 'block' : 'none';
+      const factEl = document.getElementById('detail-fact');
+      const fact = String(p.fact || '').trim();
+      factEl.textContent = fact;
+      factEl.style.display = fact ? 'block' : 'none';
+      const groupEl = document.getElementById('detail-group');
+      groupEl.textContent = p.group || '';
+      groupEl.style.display = p.group ? 'block' : 'none';
 
       // photo
       const img         = document.getElementById('detail-photo-img');
@@ -1792,6 +1874,9 @@
       editId = null;
       document.getElementById('form-title').textContent = '添加植物';
       document.getElementById('f-name').value    = '';
+      document.getElementById('f-english').value = '';
+      document.getElementById('f-japanese').value= '';
+      document.getElementById('f-fact').value    = '';
       document.getElementById('f-group').value   = '';
       document.getElementById('f-light').value   = '';
       document.getElementById('f-location').value= '';
@@ -1811,6 +1896,9 @@
       editId = p.id;
       document.getElementById('form-title').textContent     = '编辑植物';
       document.getElementById('f-name').value               = p.name || '';
+      document.getElementById('f-english').value            = p.englishName || '';
+      document.getElementById('f-japanese').value           = p.japaneseName || '';
+      document.getElementById('f-fact').value               = p.fact || '';
       document.getElementById('f-group').value              = p.group || '';
       document.getElementById('f-light').value              = p.light || '';
       document.getElementById('f-location').value           = p.location || '';
@@ -1832,6 +1920,9 @@
       e.preventDefault();
       const data = {
         name:                  document.getElementById('f-name').value.trim(),
+        englishName:           document.getElementById('f-english').value.trim(),
+        japaneseName:          document.getElementById('f-japanese').value.trim(),
+        fact:                  document.getElementById('f-fact').value.trim(),
         group:                 document.getElementById('f-group').value.trim(),
         light:                 document.getElementById('f-light').value.trim(),
         location:              document.getElementById('f-location').value.trim(),
@@ -1921,13 +2012,13 @@
       const snap = await plantsRef.limit(1).get();
       if (!snap.empty) return;
       const initial = [
-        { name:'红掌',           group:'室内散射光组', location:'室内窗边',                light:'散射光', wateringFrequencyDays:4,  lastWateredDate:null, notes:'' },
-        { name:'雪莹（粗肋草）', group:'室内散射光组', location:'电视柜下层（需挪到窗边）', light:'散射光', wateringFrequencyDays:4,  lastWateredDate:null, notes:'' },
-        { name:'龟背竹',         group:'室内散射光组', location:'室内窗边',                light:'散射光', wateringFrequencyDays:6,  lastWateredDate:null, notes:'' },
-        { name:'蔓绿绒',         group:'室内散射光组', location:'电视柜下层（需挪到窗边）', light:'散射光', wateringFrequencyDays:4,  lastWateredDate:null, notes:'' },
-        { name:'封蜡富贵竹',     group:'室内散射光组', location:'电视柜下层（需挪到窗边）', light:'散射光', wateringFrequencyDays:7,  lastWateredDate:null, notes:'水培，每周换水' },
-        { name:'空心菜',         group:'阳台全日照组', location:'阳台直晒',                light:'全日照', wateringFrequencyDays:1,  lastWateredDate:null, notes:'每天浇透' },
-        { name:'白桃扇仙人掌',   group:'阳台全日照组', location:'阳台',                    light:'全日照', wateringFrequencyDays:18, lastWateredDate:null, notes:'Opuntia microdasys 兔耳朵' },
+        { name:'红掌',           englishName:'', japaneseName:'', fact:'', group:'室内散射光组', location:'室内窗边',                light:'散射光', wateringFrequencyDays:4,  lastWateredDate:null, notes:'' },
+        { name:'雪莹（粗肋草）', englishName:'', japaneseName:'', fact:'', group:'室内散射光组', location:'电视柜下层（需挪到窗边）', light:'散射光', wateringFrequencyDays:4,  lastWateredDate:null, notes:'' },
+        { name:'龟背竹',         englishName:'', japaneseName:'', fact:'', group:'室内散射光组', location:'室内窗边',                light:'散射光', wateringFrequencyDays:6,  lastWateredDate:null, notes:'' },
+        { name:'蔓绿绒',         englishName:'', japaneseName:'', fact:'', group:'室内散射光组', location:'电视柜下层（需挪到窗边）', light:'散射光', wateringFrequencyDays:4,  lastWateredDate:null, notes:'' },
+        { name:'封蜡富贵竹',     englishName:'', japaneseName:'', fact:'', group:'室内散射光组', location:'电视柜下层（需挪到窗边）', light:'散射光', wateringFrequencyDays:7,  lastWateredDate:null, notes:'水培，每周换水' },
+        { name:'空心菜',         englishName:'', japaneseName:'', fact:'', group:'阳台全日照组', location:'阳台直晒',                light:'全日照', wateringFrequencyDays:1,  lastWateredDate:null, notes:'每天浇透' },
+        { name:'白桃扇仙人掌',   englishName:'', japaneseName:'', fact:'', group:'阳台全日照组', location:'阳台',                    light:'全日照', wateringFrequencyDays:18, lastWateredDate:null, notes:'Opuntia microdasys 兔耳朵' },
       ];
       for (const p of initial) {
         await plantsRef.add({ ...p, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
