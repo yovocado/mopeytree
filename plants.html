@@ -300,6 +300,59 @@
       border-radius: 50%;
     }
 
+    .water-burst {
+      position: fixed;
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+      z-index: 2501;
+      transform: translate(-50%, -50%);
+    }
+
+    .water-burst::before,
+    .water-burst::after {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border: 2px solid rgba(177, 218, 212, 0.9);
+      border-radius: 50%;
+      animation: water-ring 900ms cubic-bezier(0.18, 0.8, 0.28, 1) forwards;
+    }
+
+    .water-burst::after {
+      inset: -18px;
+      border-color: rgba(246, 222, 151, 0.72);
+      animation-delay: 120ms;
+      animation-duration: 1100ms;
+    }
+
+    .water-drop,
+    .water-spark {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: var(--size, 7px);
+      height: var(--size, 10px);
+      opacity: 0;
+      transform: translate(-50%, -50%);
+      animation: water-drop-pop 1050ms cubic-bezier(0.18, 0.8, 0.28, 1) var(--delay, 0ms) forwards;
+    }
+
+    .water-drop {
+      border: 1px solid rgba(255,255,255,0.9);
+      border-radius: 70% 70% 70% 0;
+      background: linear-gradient(135deg, rgba(192,239,232,0.92), rgba(112,178,191,0.54));
+      box-shadow: 0 0 8px rgba(170,232,228,0.65);
+    }
+
+    .water-spark {
+      width: var(--size, 10px);
+      height: var(--size, 10px);
+      background: rgba(255,231,152,0.92);
+      clip-path: polygon(50% 0%, 62% 36%, 100% 50%, 62% 64%, 50% 100%, 38% 64%, 0% 50%, 38% 36%);
+      filter: drop-shadow(0 0 5px rgba(255,225,136,0.84));
+    }
+
     @keyframes drift {
       from { transform: translate3d(0, 0, 0) rotate(var(--r)); }
       to { transform: translate3d(10px, -14px, 0) rotate(calc(var(--r) + 5deg)); }
@@ -316,9 +369,25 @@
       100% { opacity: 0; transform: translate3d(var(--x), var(--y), 0) rotate(calc(var(--r) + 18deg)) scale(1.08); }
     }
 
+    @keyframes water-ring {
+      0% { opacity: 0.92; transform: scale(0.35); }
+      65% { opacity: 0.42; }
+      100% { opacity: 0; transform: scale(4.1); }
+    }
+
+    @keyframes water-drop-pop {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.35) rotate(-18deg); }
+      18% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(1) rotate(var(--rot, 18deg)); }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .seed,
-      .water-seed {
+      .water-seed,
+      .water-burst::before,
+      .water-burst::after,
+      .water-drop,
+      .water-spark {
         animation: none;
       }
     }
@@ -562,6 +631,11 @@
       border-radius: 8px;
       box-shadow: 0 28px 90px rgba(64,111,143,0.22);
       backdrop-filter: blur(18px);
+    }
+
+    #detail-dialog {
+      width: min(100%, 460px);
+      max-height: 84vh;
     }
 
     .modal-close {
@@ -1067,7 +1141,11 @@
         font-size: 1rem;
       }
       .modal-backdrop {
-        padding: 12px;
+        padding: 24px 16px;
+      }
+      #detail-dialog {
+        width: min(100%, 390px);
+        max-height: 82vh;
       }
       .modal {
         max-height: 92vh;
@@ -1156,8 +1234,6 @@
   <!-- ── DETAIL MODAL ── -->
   <div class="modal-backdrop" id="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-name">
     <div class="modal" tabindex="-1" id="detail-dialog">
-      <button class="modal-close" onclick="closeDetail()" aria-label="关闭植物详情">✕</button>
-
       <div class="detail-photo-wrap" id="detail-photo-wrap">
         <div class="detail-photo-placeholder" onclick="triggerPhotoUpload()" id="detail-photo-placeholder" role="button" tabindex="0" aria-label="上传植物照片">
           <span>点击上传照片</span>
@@ -1338,6 +1414,43 @@
       const rect = originEl.getBoundingClientRect();
       const startX = rect.left + rect.width / 2;
       const startY = rect.top + rect.height / 2;
+      const burst = document.createElement('span');
+      burst.className = 'water-burst';
+      burst.style.left = `${startX}px`;
+      burst.style.top = `${startY}px`;
+      layer.appendChild(burst);
+
+      const drops = [
+        [-52, -34, 7, 0, -34], [-28, -58, 8, 55, -18], [0, -70, 6, 105, 8],
+        [30, -56, 8, 35, 28], [56, -28, 7, 82, 42], [64, 8, 6, 128, 78],
+        [40, 42, 8, 18, 118], [4, 62, 6, 104, 166], [-36, 48, 8, 46, -132],
+        [-62, 18, 6, 146, -92], [-64, -12, 7, 70, -72], [-18, 30, 6, 168, -170]
+      ];
+      drops.forEach(([x, y, size, delay, rot]) => {
+        const drop = document.createElement('span');
+        drop.className = 'water-drop';
+        drop.style.setProperty('--x', `${x}px`);
+        drop.style.setProperty('--y', `${y}px`);
+        drop.style.setProperty('--size', `${size}px`);
+        drop.style.setProperty('--delay', `${delay}ms`);
+        drop.style.setProperty('--rot', `${rot}deg`);
+        burst.appendChild(drop);
+      });
+
+      const sparks = [
+        [-42, -48, 9, 80], [20, -74, 11, 150], [64, -18, 8, 210],
+        [30, 55, 10, 260], [-44, 42, 8, 180], [-70, 0, 7, 120]
+      ];
+      sparks.forEach(([x, y, size, delay]) => {
+        const spark = document.createElement('span');
+        spark.className = 'water-spark';
+        spark.style.setProperty('--x', `${x}px`);
+        spark.style.setProperty('--y', `${y}px`);
+        spark.style.setProperty('--size', `${size}px`);
+        spark.style.setProperty('--delay', `${delay}ms`);
+        burst.appendChild(spark);
+      });
+
       for (let i = 0; i < 5; i++) {
         const seed = document.createElement('span');
         seed.className = 'water-seed';
@@ -1349,6 +1462,7 @@
         layer.appendChild(seed);
         setTimeout(() => seed.remove(), 1200);
       }
+      setTimeout(() => burst.remove(), 1500);
     }
 
     function toggleOverdueSort() {
@@ -1517,7 +1631,7 @@
         await loadPlants();
         await openDetail(detailId);
         showNotice('已记录浇水');
-        releaseWaterSeeds(originBtn);
+        releaseWaterSeeds(document.querySelector('.water-now-btn') || originBtn);
       } catch (err) {
         alert('记录失败，请稍后再试。');
         console.error(err);
@@ -1794,7 +1908,6 @@
       if (e.key !== 'Escape') return;
       if (document.getElementById('lightbox').classList.contains('open')) closeLightbox();
       else if (document.getElementById('form-modal').classList.contains('open')) closeForm();
-      else if (document.getElementById('detail-modal').classList.contains('open')) closeDetail();
     });
 
     // document-level card click — catches everything regardless of z-index
