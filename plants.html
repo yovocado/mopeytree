@@ -520,36 +520,62 @@
       flex-direction: column;
       gap: 0;
       padding: 8px 0 34px;
+      position: relative;
+      isolation: isolate;
+    }
+    .plant-shelves::before,
+    .plant-shelves::after {
+      content: '';
+      position: absolute;
+      top: 40px;
+      bottom: 64px;
+      width: 7px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(120,151,128,0.8), rgba(225,238,221,0.94));
+      box-shadow: 0 10px 20px rgba(77,111,83,0.15), inset 1px 0 rgba(255,255,255,0.64);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .plant-shelves::before {
+      left: 9%;
+      transform: rotate(-7deg);
+      transform-origin: top center;
+    }
+    .plant-shelves::after {
+      right: 10%;
+      transform: rotate(7deg);
+      transform-origin: top center;
     }
 
     .shelf-level {
-      min-height: 254px;
+      min-height: 250px;
       width: 100%;
-      padding: 0 28px 38px;
+      padding: 0 42px 38px;
       position: relative;
       display: grid;
       align-items: end;
+      z-index: 1;
     }
     .shelf-level:nth-child(2) {
-      width: 94%;
-      margin-left: 6%;
+      width: 88%;
+      margin-left: 8%;
     }
     .shelf-level:nth-child(3) {
-      width: 90%;
-      margin-left: 10%;
+      width: 82%;
+      margin-left: 15%;
     }
 
     .shelf-level::before {
       content: '';
       position: absolute;
-      left: 14px;
-      right: 14px;
+      left: 18px;
+      right: 18px;
       bottom: 25px;
-      height: 11px;
-      border: 1px solid rgba(117,143,125,0.34);
+      height: 13px;
+      border: 1px solid rgba(117,143,125,0.48);
       border-radius: 4px;
-      background: linear-gradient(180deg, rgba(226,238,225,0.95), rgba(181,207,190,0.9));
-      box-shadow: 0 12px 18px rgba(81,116,93,0.14), inset 0 1px rgba(255,255,255,0.62);
+      background: linear-gradient(180deg, rgba(231,242,228,0.98), rgba(169,201,178,0.94));
+      box-shadow: 0 12px 18px rgba(81,116,93,0.18), inset 0 1px rgba(255,255,255,0.76);
       z-index: 1;
     }
     .shelf-level::after {
@@ -566,8 +592,8 @@
     .shelf-post {
       position: absolute;
       bottom: 24px;
-      width: 5px;
-      height: 76px;
+      width: 4px;
+      height: 52px;
       border-radius: 999px;
       background: linear-gradient(90deg, rgba(143,169,148,0.76), rgba(218,233,216,0.88));
       box-shadow: 0 7px 16px rgba(83,119,95,0.14);
@@ -588,7 +614,7 @@
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       align-items: end;
-      gap: 10px;
+      gap: 14px;
       position: relative;
       z-index: 2;
     }
@@ -1261,16 +1287,30 @@
       }
       .section      { padding: 22px 20px 0; }
       .plant-shelves { padding-top: 2px; }
+      .plant-shelves::before {
+        left: 5%;
+        top: 30px;
+        bottom: 48px;
+      }
+      .plant-shelves::after {
+        right: 5%;
+        top: 30px;
+        bottom: 48px;
+      }
       .shelf-level,
       .shelf-level:nth-child(2),
       .shelf-level:nth-child(3) {
-        width: 100%;
-        margin-left: 0;
         min-height: 228px;
         padding: 0 8px 34px;
       }
-      .shelf-level:nth-child(2) { transform: translateX(3%); }
-      .shelf-level:nth-child(3) { transform: translateX(-2%); }
+      .shelf-level:nth-child(2) {
+        width: 94%;
+        margin-left: 3%;
+      }
+      .shelf-level:nth-child(3) {
+        width: 90%;
+        margin-left: 8%;
+      }
       .shelf-level::before {
         left: 5px;
         right: 5px;
