@@ -104,10 +104,16 @@
       margin-top: 3px;
     }
 
-    .plants-link {
+    .personal-nav {
       position: fixed;
       bottom: 50px;
       left: 50px;
+      display: flex;
+      gap: 26px;
+      z-index: 100;
+    }
+
+    .plants-link {
       font-family: 'EB Garamond', serif;
       font-size: 1.5rem;
       color: var(--faint);
@@ -270,6 +276,9 @@
 
     /* ── MOBILE ── */
     @media (max-width: 680px) {
+      .personal-nav { left: 22px; gap: 20px; }
+      .plants-link { font-size: 1.3rem; }
+
       body {
         background:
           linear-gradient(90deg, rgba(237,234,226,0.2), rgba(237,234,226,0.72) 50%, rgba(237,234,226,0.22)),
@@ -326,7 +335,10 @@
     <span class="status-text" id="mood-text"></span>
   </div>
 
-  <a href="plants.html" class="plants-link">plants</a>
+  <nav class="personal-nav" aria-label="个人收藏">
+    <a href="plants.html" class="plants-link">plants</a>
+    <a href="books.html" class="plants-link">books</a>
+  </nav>
   <button class="new-month-btn" id="new-month-btn" onclick="goToCurrentMonth()">+ new month</button>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
