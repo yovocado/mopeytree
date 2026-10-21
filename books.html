@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ccd8d3">
+  <meta name="description" content="mopeytree 的私人书单。">
+  <title>books · mopeytree</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root { --ink:#304b45; --muted:#526b65; --line:#8fa69d; --paper:#e0e8e1; --accent:#496b59; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); background:linear-gradient(130deg,#cbd7ca 0%,#cbdad5 48%,#bfcfd7 100%); font-family:'EB Garamond',Georgia,'Songti SC','Noto Serif CJK SC',serif; font-size:16px; line-height:1.6; }
+    body.modal-open { overflow:hidden; }
+    button,input,select,textarea { font:inherit; color:inherit; }
+    button,a,input,select,textarea { -webkit-tap-highlight-color:transparent; }
+    button { cursor:pointer; }
+    button:disabled { cursor:wait; opacity:.6; }
+    a { color:inherit; }
+    :focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
+    [hidden] { display:none!important; }
+    .page { width:min(1160px,100%); margin:auto; padding:32px 40px 72px; }
+    .back { display:inline-block; text-decoration:none; padding:8px 0; color:var(--muted); }
+    .masthead { display:flex; justify-content:space-between; align-items:center; gap:24px; margin:18px 0 32px; padding-bottom:22px; border-bottom:1px solid var(--line); }
+    h1 { font-size:76px; font-style:italic; font-weight:400; line-height:1; margin:0 0 12px; }
+    .subtitle { color:var(--muted); margin:0; font-size:15px; }
+    .button { min-height:44px; padding:8px 18px; border:1px solid var(--line); border-radius:4px; background:transparent; text-decoration:none; display:inline-flex; justify-content:center; align-items:center; gap:6px; }
+    .button:hover { background:#d9e3dc; }
+    .primary { background:var(--accent); border-color:var(--accent); color:#f0f4ee; }
+    .primary:hover { background:#3b5e4c; }
+    .toolbar { display:flex; gap:20px; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; }
+    .filters { display:flex; flex-wrap:wrap; gap:5px; }
+    .filter { border:0; border-bottom:2px solid transparent; background:none; padding:8px 12px; min-height:44px; white-space:nowrap; }
+    .filter[aria-pressed="true"] { border-color:var(--accent); font-weight:600; }
+    .filter span { margin-left:6px; color:var(--muted); font:12px Georgia,serif; }
+    .tools { display:flex; gap:12px; align-items:center; }
+    input,textarea,select { min-width:0; border:1px solid var(--line); background:#dce5df; border-radius:4px; padding:9px 11px; }
+    input,select { min-height:44px; }
+    input::placeholder,textarea::placeholder { color:var(--muted); opacity:1; }
+    .search { width:200px; }
+    .sort { width:132px; }
+    .library { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:36px 28px; }
+    .book { min-width:0; text-align:left; border:0; padding:0; background:transparent; display:flex; flex-direction:column; align-items:stretch; }
+    .cover { display:block; position:relative; width:100%; aspect-ratio:2/3; background:#a9beb1; border-radius:2px 4px 4px 2px; box-shadow:2px 5px 9px #334c431c; overflow:hidden; transition:transform .2s,box-shadow .2s; }
+    .book:hover .cover { transform:translateY(-4px); box-shadow:3px 9px 12px #334c4326; }
+    .cover::after { content:''; position:absolute; inset:0; box-shadow:inset 4px 0 6px #223a3a19,inset -1px 0 #ffffff25; pointer-events:none; }
+    .cover img { display:block; width:100%; height:100%; object-fit:contain; }
+    .cover[data-tone="1"] { background:#b4b9c8; }
+    .cover[data-tone="2"] { background:#b8c6cc; }
+    .cover[data-tone="3"] { background:#bac7ad; }
+    .cover-placeholder { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px 16px; text-align:center; border-left:6px solid #506e5926; }
+    .cover-placeholder strong { font-size:19px; font-weight:400; line-height:1.55; overflow-wrap:anywhere; }
+    .cover-placeholder small { display:block; margin-top:20px; font-size:12px; color:#405a52; }
+    .book-title { font-size:18px; line-height:1.5; font-weight:500; margin-top:16px; overflow-wrap:anywhere; }
+    .book-author { font-size:14px; margin-top:3px; color:var(--muted); overflow-wrap:anywhere; }
+    .book-status { display:flex; align-items:center; gap:7px; color:var(--muted); font-size:13px; margin-top:9px; }
+    .book-status::before { content:''; width:6px; height:6px; border-radius:50%; background:#859790; flex-shrink:0; }
+    .book-status[data-status="reading"]::before { background:#966651; }
+    .book-status[data-status="finished"]::before { background:#3e745e; }
+    .empty { padding:64px 16px 90px; text-align:center; border-block:1px solid #8fa69d66; color:var(--muted); }
+    .empty h2 { font-size:23px; font-weight:400; color:var(--ink); margin:0 0 12px; }
+    .empty p { margin:0 0 22px; }
+    .notice { margin-bottom:20px; padding:12px 0; color:#7a3938; }
+    .notice button { margin-left:12px; background:none; border:0; text-decoration:underline; }
+    .result-summary { font-size:13px; color:var(--muted); margin:30px 0 0; }
+    dialog { width:min(600px,calc(100% - 48px)); max-height:calc(100dvh - 64px); padding:0; border:1px solid #91a89c; border-radius:6px; background:var(--paper); color:var(--ink); box-shadow:0 18px 80px #1d342e33; overflow:auto; }
+    dialog::backdrop { background:#233b3766; backdrop-filter:blur(4px); }
+    .dialog-inner { padding:28px; }
+    .dialog-heading { font-size:25px; font-weight:400; margin:0 0 24px; }
+    .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+    .form-grid input,.form-grid select { width:100%; }
+    label { display:flex; flex-direction:column; gap:6px; font-size:14px; min-width:0; }
+    .wide { grid-column:1/-1; }
+    label small { color:var(--muted); font-size:12px; }
+    textarea { resize:vertical; min-height:120px; width:100%; }
+    .cover-editor { display:flex; align-items:center; gap:18px; }
+    .cover-preview { width:70px; height:105px; object-fit:contain; background:#b7cbbd; flex-shrink:0; }
+    .cover-actions { display:flex; flex-direction:column; gap:8px; min-width:0; }
+    .upload { position:relative; overflow:hidden; }
+    .upload input { position:absolute; inset:0; opacity:0; width:100%; cursor:pointer; }
+    .upload:focus-within { outline:2px solid var(--accent); outline-offset:3px; }
+    .text-button { border:0; padding:5px 0; text-align:left; background:none; font-size:13px; text-decoration:underline; }
+    .form-error { color:#863c3c; margin:16px 0 0; }
+    .dialog-actions { display:flex; gap:12px; justify-content:flex-end; padding-top:24px; margin-top:24px; border-top:1px solid #a5b8ad; }
+    .detail-top { display:grid; grid-template-columns:132px minmax(0,1fr); gap:24px; align-items:start; }
+    .detail-top .cover { pointer-events:none; }
+    .detail-title { font-weight:400; font-size:28px; line-height:1.4; margin:0 0 8px; overflow-wrap:anywhere; }
+    .detail-author { color:var(--muted); margin:0 0 20px; overflow-wrap:anywhere; }
+    .detail-status { width:100%; max-width:180px; }
+    .detail-dates { display:flex; flex-wrap:wrap; gap:12px 24px; font-size:13px; color:var(--muted); margin-top:24px; }
+    .detail-notes { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.9; margin-top:22px; }
+    .notes-label { display:block; font-size:13px; color:var(--muted); margin-bottom:8px; }
+    .detail-actions { justify-content:space-between; }
+    .danger { color:#824c47; }
+    .confirm-text { overflow-wrap:anywhere; }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+    @media(max-width:1000px) { .library { grid-template-columns:repeat(4,minmax(0,1fr)); } .toolbar { gap:16px; } }
+    @media(max-width:760px) { .library { grid-template-columns:repeat(3,minmax(0,1fr)); gap:28px 22px; } .toolbar,.tools { width:100%; } .search { flex:1; width:0; } .page { padding:24px 24px 56px; } h1 { font-size:64px; } }
+    @media(max-width:520px) { .page { padding:20px 20px 48px; } .masthead { margin:16px 0 22px; gap:12px; } h1 { font-size:56px; } .subtitle { font-size:13px; } .masthead>.button { padding:8px 12px; font-size:14px; } .library { grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px 20px; } .filter { padding:8px 9px; } .filter span { margin-left:4px; } .sort { width:118px; font-size:14px; } .book-title { font-size:17px; margin-top:12px; } .book-author { font-size:13px; } dialog { width:calc(100% - 40px); max-height:calc(100dvh - 48px); } .dialog-inner { padding:22px 18px; } .form-grid { gap:16px 12px; } .detail-top { grid-template-columns:90px minmax(0,1fr); gap:16px; } .detail-title { font-size:23px; } .detail-author { font-size:14px; margin-bottom:14px; } .detail-status { font-size:14px; padding-inline:8px; } .button { padding-inline:14px; } }
+    @media(prefers-reduced-motion:reduce) { * { transition:none!important; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <a class="back" href="index.html">← mopeytree</a>
+    <header class="masthead">
+      <div><h1>books</h1><p class="subtitle">我的书单 <span id="total-count"></span></p></div>
+      <button class="button primary" id="add-book" type="button">+ 添加书籍</button>
+    </header>
+    <section aria-label="书单">
+      <div class="toolbar">
+        <div class="filters" role="group" aria-label="阅读状态">
+          <button class="filter" type="button" data-filter="all" aria-pressed="true">全部<span>0</span></button>
+          <button class="filter" type="button" data-filter="reading" aria-pressed="false">在读<span>0</span></button>
+          <button class="filter" type="button" data-filter="finished" aria-pressed="false">已读<span>0</span></button>
+          <button class="filter" type="button" data-filter="wishlist" aria-pressed="false">想读<span>0</span></button>
+        </div>
+        <div class="tools">
+          <label class="sr-only" for="search">搜索书名或作者</label>
+          <input class="search" id="search" type="search" placeholder="搜索书名 / 作者" maxlength="150">
+          <label class="sr-only" for="sort">书单排序</label>
+          <select class="sort" id="sort"><option value="recent">最近添加</option><option value="finished">最近读完</option><option value="title">按书名</option></select>
+        </div>
+      </div>
+      <div class="notice" id="load-error" role="alert" hidden><span></span><button id="retry" type="button">重试</button></div>
+      <div class="empty" id="empty" role="status"><h2 id="empty-title">正在翻开书单…</h2><p id="empty-message"></p><button class="button" id="empty-add" type="button" hidden>+ 添加第一本书</button></div>
+      <div class="library" id="library" aria-busy="true"></div>
+      <p class="result-summary" id="result-summary" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <dialog id="editor" aria-labelledby="editor-title">
+    <form id="book-form" class="dialog-inner">
+      <h2 class="dialog-heading" id="editor-title">添加书籍</h2>
+      <div class="form-grid">
+        <div class="wide cover-editor">
+          <img class="cover-preview" id="cover-preview" alt="封面预览" hidden>
+          <div class="cover-actions">
+            <label class="button upload">选择封面<input id="cover-file" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif" aria-label="选择书籍封面"></label>
+            <button class="text-button" id="remove-cover" type="button" hidden>移除封面</button>
+            <span class="subtitle" style="font-size:12px">封面可留空</span>
+          </div>
+        </div>
+        <label class="wide">书名<input id="book-title" required maxlength="150" autocomplete="off"></label>
+        <label class="wide">作者<input id="book-author" maxlength="120" autocomplete="off"></label>
+        <label class="wide">阅读状态<select id="book-status"><option value="wishlist">想读</option><option value="reading">在读</option><option value="finished">已读</option></select></label>
+        <label>开始日期<input id="started-on" type="date"></label>
+        <label>读完日期<input id="finished-on" type="date"></label>
+        <label class="wide">阅读笔记 / 短评<textarea id="book-notes" maxlength="6000" rows="4"></textarea></label>
+      </div>
+      <p class="form-error" id="form-error" role="alert" hidden></p>
+      <div class="dialog-actions"><button class="button" id="cancel-edit" type="button">取消</button><button class="button primary" id="save-book" type="submit">保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="detail" aria-labelledby="detail-title">
+    <div class="dialog-inner">
+      <div class="detail-top"><div id="detail-cover"></div><div><h2 class="detail-title" id="detail-title"></h2><p class="detail-author" id="detail-author"></p><label for="detail-status" class="sr-only">阅读状态</label><select class="detail-status" id="detail-status"><option value="wishlist">想读</option><option value="reading">在读</option><option value="finished">已读</option></select></div></div>
+      <div class="detail-dates" id="detail-dates"></div>
+      <div class="detail-notes"><span class="notes-label">阅读笔记</span><div id="detail-notes"></div></div>
+      <p class="form-error" id="detail-error" role="alert" hidden></p>
+      <div class="dialog-actions detail-actions"><button class="text-button danger" id="delete-book" type="button">删除书籍</button><button class="button" id="edit-book" type="button">编辑书籍</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="delete-confirm" aria-labelledby="delete-title">
+    <div class="dialog-inner"><h2 class="dialog-heading" id="delete-title">删除这本书？</h2><p class="confirm-text" id="delete-message"></p><p class="form-error" id="delete-error" role="alert" hidden></p><div class="dialog-actions"><button class="button" id="cancel-delete" type="button">保留</button><button class="button danger" id="confirm-delete" type="button">确认删除</button></div></div>
+  </dialog>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script>
+    const $ = id => document.getElementById(id);
+    const STATUS = { wishlist:'想读', reading:'在读', finished:'已读' };
+    let db, books = [], loaded = false, filter = 'all', editingId = null, activeId = null;
+    let draftCover = '', coverVersion = 0, coverBusy = false, saving = false, changingStatus = false, deleting = false;
+    const asText = value => typeof value === 'string' ? value : '';
+    const safeCover = value => typeof value === 'string' && /^data:image\/(jpeg|png|webp);base64,/i.test(value);
+    const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(asText(value)) ? value : '';
+    function today() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+    function timestamp(value) { return typeof value === 'number' ? value : value && typeof value.seconds === 'number' ? value.seconds * 1000 : 0; }
+    function message(id, text) { $(id).textContent = text; $(id).hidden = !text; }
+    function databaseError(error) { return error && error.code === 'permission-denied' ? '暂时没有书单的访问权限，请检查 Firebase 中 books 集合的读写规则。' : '连接暂时不成功，请检查网络后再试。'; }
+
+    function makeCover(book, index = 0) {
+      const cover = document.createElement('span'); cover.className = 'cover'; cover.dataset.tone = String(index % 4);
+      if (safeCover(book.coverBase64)) {
+        const img = document.createElement('img'); img.src = book.coverBase64; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; cover.append(img);
+      } else {
+        const placeholder = document.createElement('span'); placeholder.className = 'cover-placeholder';
+        const title = document.createElement('strong'); title.textContent = asText(book.title) || '未命名书籍';
+        const author = document.createElement('small'); author.textContent = asText(book.author); placeholder.append(title,author); cover.append(placeholder);
+      }
+      return cover;
+    }
+
+    function render() {
+      document.querySelectorAll('[data-filter]').forEach(button => {
+        const key = button.dataset.filter;
+        button.setAttribute('aria-pressed',String(filter === key));
+        button.querySelector('span').textContent = key === 'all' ? books.length : books.filter(book => book.status === key).length;
+      });
+      $('total-count').textContent = loaded ? ` / ${books.length}` : '';
+      const query = $('search').value.trim().toLocaleLowerCase();
+      let visible = books.filter(book => (filter === 'all' || book.status === filter) && (!query || `${asText(book.title)} ${asText(book.author)}`.toLocaleLowerCase().includes(query)));
+      visible.sort((a,b) => {
+        if ($('sort').value === 'title') return asText(a.title).localeCompare(asText(b.title),'zh-CN');
+        if ($('sort').value === 'finished') return validDate(b.finishedOn).localeCompare(validDate(a.finishedOn)) || timestamp(b.createdAt) - timestamp(a.createdAt);
+        return timestamp(b.createdAt) - timestamp(a.createdAt) || a.id.localeCompare(b.id);
+      });
+      const fragment = document.createDocumentFragment();
+      visible.forEach((book,index) => {
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'book'; button.dataset.id = book.id;
+        button.setAttribute('aria-label',`${asText(book.title)}，${STATUS[book.status]}`);
+        const title = document.createElement('span'); title.className = 'book-title'; title.textContent = asText(book.title) || '未命名书籍';
+        const author = document.createElement('span'); author.className = 'book-author'; author.textContent = asText(book.author) || '作者未填写';
+        const status = document.createElement('span'); status.className = 'book-status'; status.dataset.status = book.status; status.textContent = STATUS[book.status];
+        button.append(makeCover(book,index),title,author,status); button.addEventListener('click',() => openDetail(book.id)); fragment.append(button);
+      });
+      $('library').replaceChildren(fragment); $('library').setAttribute('aria-busy','false');
+      $('empty').hidden = !loaded || visible.length > 0;
+      if (loaded && !visible.length) {
+        $('empty-title').textContent = books.length ? '这里暂时没有书籍' : '第一本，想放哪一本？';
+        $('empty-message').textContent = books.length ? '换个阅读状态，或试试其他书名、作者。' : '读过的、正在读的，还有想读的。';
+        $('empty-add').hidden = books.length > 0;
+      }
+      $('result-summary').textContent = loaded && books.length ? `${visible.length} 本${filter !== 'all' ? ` · ${STATUS[filter]}` : ''}` : '';
+    }
+
+    async function loadBooks() {
+      $('load-error').hidden = true; $('library').setAttribute('aria-busy','true');
+      $('retry').disabled = true;
+      try {
+        if (!db) throw new Error('database unavailable');
+        const snapshot = await db.collection('books').get();
+        books = snapshot.docs.map(doc => { const data = doc.data(); return {...data,id:doc.id,status:Object.hasOwn(STATUS,data.status) ? data.status : 'wishlist'}; });
+        loaded = true; $('add-book').disabled = false; render();
+      } catch (error) {
+        $('load-error').hidden = false; $('load-error').querySelector('span').textContent = databaseError(error);
+        $('library').setAttribute('aria-busy','false');
+        if (!loaded) { $('empty-title').textContent = '书单还没有载入'; $('empty-message').textContent = ''; }
+      } finally { $('retry').disabled = false; }
+    }
+
+    function showDialog(dialog) { dialog.showModal(); document.body.classList.add('modal-open'); }
+    function closeDialog(dialog) { dialog.close(); if (!document.querySelector('dialog[open]')) document.body.classList.remove('modal-open'); }
+    function isBusy(dialog) { return dialog === $('editor') ? saving || coverBusy : dialog === $('detail') ? changingStatus : deleting; }
+    document.querySelectorAll('dialog').forEach(dialog => {
+      let pointerStartedOutside = false;
+      const outside = event => { const r = dialog.getBoundingClientRect(); return event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom; };
+      dialog.addEventListener('pointerdown',event => { pointerStartedOutside = event.target === dialog && outside(event); });
+      dialog.addEventListener('click',event => { if (pointerStartedOutside && event.target === dialog && outside(event) && !isBusy(dialog)) closeDialog(dialog); pointerStartedOutside = false; });
+      dialog.addEventListener('cancel',event => { if (isBusy(dialog)) event.preventDefault(); });
+      dialog.addEventListener('close',() => {
+        if (!document.querySelector('dialog[open]')) document.body.classList.remove('modal-open');
+        if (dialog === $('editor')) { coverVersion++; coverBusy = false; }
+        if (dialog === $('detail') && !document.querySelector('dialog[open]')) {
+          const opener = [...document.querySelectorAll('.book')].find(button => button.dataset.id === activeId);
+          (opener || $('add-book')).focus();
+        }
+      });
+    });
+
+    function updateCoverPreview() {
+      $('cover-preview').hidden = !draftCover; $('remove-cover').hidden = !draftCover;
+      if (draftCover) $('cover-preview').src = draftCover; else $('cover-preview').removeAttribute('src');
+    }
+    function openEditor(book) {
+      if (!loaded || saving || changingStatus) return;
+      editingId = book ? book.id : null; coverVersion++; coverBusy = false;
+      $('book-form').reset(); $('editor-title').textContent = book ? '编辑书籍' : '添加书籍';
+      $('book-title').value = book ? asText(book.title) : ''; $('book-author').value = book ? asText(book.author) : '';
+      $('book-status').value = book ? book.status : 'wishlist'; $('book-notes').value = book ? asText(book.notes) : '';
+      $('started-on').value = book ? validDate(book.startedOn) : ''; $('finished-on').value = book ? validDate(book.finishedOn) : '';
+      draftCover = book && safeCover(book.coverBase64) ? book.coverBase64 : ''; updateCoverPreview(); message('form-error','');
+      if ($('detail').open) closeDialog($('detail'));
+      showDialog($('editor')); $('book-title').focus();
+    }
+
+    async function encodeCover(file) {
+      if (file.size > 25 * 1024 * 1024) throw new Error('封面文件太大，请选择小于 25 MB 的图片。');
+      if (!file.type.startsWith('image/')) throw new Error('请选择一张图片作为封面。');
+      const url = URL.createObjectURL(file);
+      try {
+        const img = new Image(); img.src = url;
+        try { await img.decode(); } catch { throw new Error('这张图片暂时无法读取，请换成 JPG、PNG 或 WebP 格式。'); }
+        const scale = Math.min(1,900 / Math.max(img.naturalWidth,img.naturalHeight));
+        const canvas = document.createElement('canvas'); canvas.width = Math.max(1,Math.round(img.naturalWidth*scale)); canvas.height = Math.max(1,Math.round(img.naturalHeight*scale));
+        const context = canvas.getContext('2d'); context.fillStyle = '#e0e8e1'; context.fillRect(0,0,canvas.width,canvas.height); context.drawImage(img,0,0,canvas.width,canvas.height);
+        for (const quality of [.84,.74,.62,.5]) { const encoded = canvas.toDataURL('image/jpeg',quality); if (encoded.length < 680000) return encoded; }
+        throw new Error('封面内容较大，请裁剪后重新选择。');
+      } finally { URL.revokeObjectURL(url); }
+    }
+
+    $('cover-file').addEventListener('change',async event => {
+      const file = event.target.files[0]; if (!file) return;
+      const version = ++coverVersion; coverBusy = true; $('save-book').disabled = true; message('form-error','');
+      try { const encoded = await encodeCover(file); if (version === coverVersion) { draftCover = encoded; updateCoverPreview(); } }
+      catch (error) { if (version === coverVersion) message('form-error',error.message); }
+      finally { if (version === coverVersion) { coverBusy = false; $('save-book').disabled = false; } }
+    });
+    $('remove-cover').addEventListener('click',() => { coverVersion++; coverBusy = false; draftCover = ''; $('cover-file').value = ''; $('save-book').disabled = false; updateCoverPreview(); });
+    $('book-status').addEventListener('change',() => {
+      if ($('book-status').value === 'reading' && !$('started-on').value) $('started-on').value = today();
+      if ($('book-status').value === 'finished' && !$('finished-on').value) $('finished-on').value = today();
+      if ($('book-status').value !== 'finished') $('finished-on').value = '';
+    });
+
+    $('book-form').addEventListener('submit',async event => {
+      event.preventDefault(); if (saving || coverBusy) return;
+      const title = $('book-title').value.trim();
+      if (!title) { message('form-error','请填写书名。'); $('book-title').focus(); return; }
+      const startedOn = validDate($('started-on').value), finishedOn = validDate($('finished-on').value), status = $('book-status').value;
+      if (startedOn && finishedOn && finishedOn < startedOn) { message('form-error','读完日期不能早于开始日期。'); return; }
+      if (finishedOn && status !== 'finished') { message('form-error','填写读完日期时，请将阅读状态设为“已读”。'); return; }
+      const data = {title,author:$('book-author').value.trim(),status,notes:$('book-notes').value.trim(),coverBase64:draftCover,startedOn,finishedOn:status === 'finished' ? finishedOn || today() : '',updatedAt:Date.now()};
+      if (status === 'reading' && !data.startedOn) data.startedOn = today();
+      saving = true; $('save-book').disabled = true; $('save-book').textContent = '保存中…'; $('cancel-edit').disabled = true; message('form-error','');
+      $('book-form').querySelectorAll('input,select,textarea,button').forEach(el => el.disabled = true);
+      try {
+        if (editingId) {
+          await db.collection('books').doc(editingId).update(data);
+          books = books.map(book => book.id === editingId ? {...book,...data} : book);
+        } else {
+          data.createdAt = Date.now(); const ref = await db.collection('books').add(data); books.push({...data,id:ref.id});
+        }
+        filter = 'all'; $('search').value = ''; render(); closeDialog($('editor')); $('add-book').focus();
+      } catch (error) { message('form-error',`未能保存。${databaseError(error)}`); }
+      finally { saving = false; $('book-form').querySelectorAll('input,select,textarea,button').forEach(el => el.disabled = false); $('save-book').textContent = '保存'; }
+    });
+
+    function fillDetail(book) {
+      $('detail-title').textContent = asText(book.title); $('detail-author').textContent = asText(book.author) || '作者未填写';
+      const cover = makeCover(book,books.findIndex(item => item.id === book.id)); const img = cover.querySelector('img'); if (img) img.loading = 'eager';
+      $('detail-cover').replaceChildren(cover); $('detail-status').value = book.status;
+      $('detail-dates').replaceChildren();
+      for (const [label,value] of [['开始',book.startedOn],['读完',book.finishedOn]]) if (validDate(value)) { const span = document.createElement('span'); span.textContent = `${label} · ${value}`; $('detail-dates').append(span); }
+      $('detail-notes').textContent = asText(book.notes) || '还没有留下笔记。';
+    }
+    function openDetail(id) { const book = books.find(item => item.id === id); if (!book) return; activeId = id; message('detail-error',''); fillDetail(book); showDialog($('detail')); }
+    $('detail-status').addEventListener('change',async () => {
+      const book = books.find(item => item.id === activeId); if (!book || changingStatus) return;
+      const status = $('detail-status').value;
+      const data = {status,updatedAt:Date.now(),finishedOn:status === 'finished' ? validDate(book.finishedOn) || today() : '',startedOn:status === 'reading' ? validDate(book.startedOn) || today() : validDate(book.startedOn)};
+      if (data.startedOn && data.finishedOn && data.startedOn > data.finishedOn) { $('detail-status').value = book.status; message('detail-error','开始日期晚于今天，请在编辑中调整日期后再标记已读。'); return; }
+      changingStatus = true; $('detail-status').disabled = true; $('edit-book').disabled = true; $('delete-book').disabled = true; message('detail-error','');
+      try { await db.collection('books').doc(book.id).update(data); Object.assign(book,data); render(); fillDetail(book); }
+      catch (error) { $('detail-status').value = book.status; message('detail-error',`状态未保存。${databaseError(error)}`); }
+      finally { changingStatus = false; $('detail-status').disabled = false; $('edit-book').disabled = false; $('delete-book').disabled = false; }
+    });
+
+    $('delete-book').addEventListener('click',() => { const book = books.find(item => item.id === activeId); if (!book) return; $('delete-message').textContent = `《${asText(book.title)}》及其笔记将被删除，此操作无法撤销。`; message('delete-error',''); showDialog($('delete-confirm')); });
+    $('confirm-delete').addEventListener('click',async () => {
+      if (deleting) return; const id = activeId; deleting = true; $('confirm-delete').disabled = true; $('cancel-delete').disabled = true;
+      try { await db.collection('books').doc(id).delete(); books = books.filter(book => book.id !== id); render(); closeDialog($('delete-confirm')); closeDialog($('detail')); $('add-book').focus(); }
+      catch (error) { message('delete-error',`未能删除。${databaseError(error)}`); }
+      finally { deleting = false; $('confirm-delete').disabled = false; $('cancel-delete').disabled = false; }
+    });
+    $('cancel-delete').addEventListener('click',() => closeDialog($('delete-confirm')));
+    $('edit-book').addEventListener('click',() => openEditor(books.find(book => book.id === activeId)));
+    $('add-book').addEventListener('click',() => openEditor()); $('empty-add').addEventListener('click',() => openEditor());
+    $('cancel-edit').addEventListener('click',() => { if (!saving && !coverBusy) closeDialog($('editor')); });
+    $('search').addEventListener('input',render); $('sort').addEventListener('change',render);
+    document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click',() => { filter = button.dataset.filter; render(); }));
+    $('retry').addEventListener('click',loadBooks);
+    try {
+      firebase.initializeApp({apiKey:'AIzaSyDyoFHUE1Tr6t1gXAU4qL3qi0lNls5ItQU',authDomain:'mopeytree.firebaseapp.com',projectId:'mopeytree',storageBucket:'mopeytree.firebasestorage.app',messagingSenderId:'743700580569',appId:'1:743700580569:web:62585c863c5a5c986296c8'});
+      db = firebase.firestore();
+    } catch (error) { /* The loading state below also handles an unavailable SDK. */ }
+    $('add-book').disabled = true;
+    loadBooks().finally(() => { $('add-book').disabled = !loaded; });
+  </script>
+</body>
+</html>
