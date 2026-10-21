@@ -390,6 +390,44 @@ function isSafeImageSrc(value) {
   return typeof value === 'string' && /^data:image\/(jpeg|jpg|png|webp|gif);base64,/i.test(value);
 }
 
+async function recoverSmallCover(month, image) {
+  try {
+    await image.decode();
+    if (Math.min(image.naturalWidth, image.naturalHeight) >= 320) return;
+
+    const cacheKey = `mopeytree:sharp-cover:${month.id}`;
+    try {
+      const cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
+      if (cached?.source === month.coverBase64 && isSafeImageSrc(cached.image)) {
+        image.src = cached.image;
+        return;
+      }
+    } catch (_) {}
+
+    let photo;
+    if (month.coverPhotoId) {
+      const doc = await db.collection('monthPhotos').doc(month.coverPhotoId).get();
+      if (doc.exists && doc.data().monthId === month.id) photo = doc.data();
+    } else {
+      const snap = await db.collection('monthPhotos').where('monthId', '==', month.id).get();
+      // Match the exact saved cover; never substitute an arbitrary photo.
+      photo = snap.docs.map(doc => doc.data()).find(item =>
+        item.thumbBase64 === month.coverBase64 || item.base64 === month.coverBase64);
+    }
+    if (!photo || !isSafeImageSrc(photo.base64) || photo.base64 === month.coverBase64) return;
+    const full = new Image();
+    full.src = photo.base64;
+    await full.decode();
+    if (Math.min(full.naturalWidth, full.naturalHeight) <= Math.min(image.naturalWidth, image.naturalHeight)) return;
+    image.src = photo.base64;
+    try {
+      sessionStorage.setItem(cacheKey, JSON.stringify({source:month.coverBase64, image:photo.base64}));
+    } catch (_) {}
+  } catch (err) {
+    console.warn('封面清晰图暂未读取，保留当前封面。', err);
+  }
+}
+
 // 心情还是从 data.json 读
 fetch('data.json').then(r => r.json()).then(d => {
   document.getElementById('mood-text').textContent = d.mood || '';
@@ -424,7 +462,9 @@ db.collection('months').get().then(snap => {
       img.className = 'card-photo';
       img.src = month.coverBase64;
       img.alt = safeText(month.label);
+      img.decoding = 'async';
       inner.appendChild(img);
+      recoverSmallCover(month, img);
     } else {
       const placeholder = document.createElement('div');
       placeholder.className = 'card-placeholder';
