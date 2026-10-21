@@ -116,14 +116,45 @@
     .plants-link {
       font-family: 'EB Garamond', serif;
       font-size: 1.5rem;
-      color: var(--faint);
+      color: var(--muted);
       letter-spacing: 0.14em;
       text-decoration: none;
       text-transform: lowercase;
       transition: color 0.2s;
       z-index: 100;
     }
-    .plants-link:hover { color: var(--muted); }
+    .plants-link:hover { color: var(--text); }
+
+    .month-picker {
+      width: min(380px, calc(100% - 48px));
+      max-height: calc(100dvh - 48px);
+      overflow: auto;
+      margin: auto;
+      border: 1px solid var(--faint);
+      border-radius: 6px;
+      padding: 26px;
+      color: var(--text);
+      background: var(--paper);
+      box-shadow: 0 16px 60px rgba(28,24,16,.18);
+    }
+    .month-picker::backdrop { background: rgba(28,24,16,.3); backdrop-filter: blur(3px); }
+    .month-picker h2 { font-size: 1.6rem; font-weight: 400; margin-bottom: 22px; }
+    .month-picker label { display: block; font-size: .9rem; margin-bottom: 8px; }
+    .month-picker input {
+      display: block; width: 100%; min-width: 0; min-height: 44px;
+      border: 1px solid var(--faint); border-radius: 3px; padding: 9px 10px;
+      font: inherit; font-size: 1rem; color: var(--text); background: var(--card);
+    }
+    .month-picker p { color: #645f55; font-size: .9rem; line-height: 1.6; margin-top: 14px; min-height: 44px; }
+    .month-picker p[data-error="true"] { color: #8c443b; }
+    .month-picker-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 22px; }
+    .month-picker button {
+      min-height: 44px; padding: 9px 14px; border: 1px solid var(--muted);
+      border-radius: 3px; background: transparent; color: var(--text); font: inherit; cursor: pointer;
+    }
+    .month-picker button[type="submit"] { background: #5e6d5b; border-color: #5e6d5b; color: #f5f2ea; }
+    .month-picker button:disabled { opacity: .6; cursor: wait; }
+    .personal-nav a:focus-visible, .month-picker :focus-visible { outline: 2px solid #5e6d5b; outline-offset: 4px; }
 
     .new-month-btn {
       position: fixed;
@@ -339,7 +370,20 @@
     <a href="plants.html" class="plants-link">plants</a>
     <a href="books.html" class="plants-link">books</a>
   </nav>
-  <button class="new-month-btn" id="new-month-btn" onclick="goToCurrentMonth()">+ new month</button>
+  <button class="new-month-btn" id="new-month-btn" onclick="openMonthPicker()" aria-haspopup="dialog">+ new month</button>
+
+  <dialog class="month-picker" id="month-picker" aria-labelledby="month-picker-title">
+    <form id="month-picker-form">
+      <h2 id="month-picker-title">新建月份</h2>
+      <label for="new-month-value">月份</label>
+      <input id="new-month-value" type="month" required min="0001-01" max="9999-12" pattern="[0-9]{4}-(0[1-9]|1[0-2])">
+      <p id="month-picker-message" role="status" aria-live="polite"></p>
+      <div class="month-picker-actions">
+        <button type="button" id="month-picker-cancel">取消</button>
+        <button type="submit" id="month-picker-submit">继续创建</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -376,12 +420,97 @@
       'f/3.5 · 1/40s  · ISO 800',
     ];
 
-    function goToCurrentMonth() {
+    const knownMonthIds = new Set();
+    let monthsReady;
+    let monthPickerBusy = false;
+    let monthPickerVersion = 0;
+
+    function currentMonthId() {
       const now = new Date();
       const y = now.getFullYear();
       const m = String(now.getMonth() + 1).padStart(2, '0');
-      window.location.href = `month.html?month=${y}-${m}`;
+      return `${y}-${m}`;
     }
+
+    function navigateToMonth(id) {
+      window.location.href = `month.html?month=${encodeURIComponent(id)}`;
+    }
+
+    function updateMonthChoice() {
+      const id = document.getElementById('new-month-value').value;
+      const exists = knownMonthIds.has(id);
+      const message = document.getElementById('month-picker-message');
+      message.dataset.error = 'false';
+      message.textContent = exists ? '这个月份已存在，不会重复创建。' : `尚未创建 · ${id}`;
+      document.getElementById('month-picker-submit').textContent = exists ? '打开已有月份' : '继续创建';
+    }
+
+    async function openMonthPicker() {
+      const dialog = document.getElementById('month-picker');
+      if (dialog.open) return;
+      const version = ++monthPickerVersion;
+      const input = document.getElementById('new-month-value');
+      input.disabled = true;
+      input.value = currentMonthId();
+      document.getElementById('month-picker-message').textContent = '正在查看已有月份…';
+      document.getElementById('month-picker-message').dataset.error = 'false';
+      document.getElementById('month-picker-submit').disabled = true;
+      dialog.showModal();
+      await monthsReady;
+      if (version !== monthPickerVersion || !dialog.open) return;
+      // Suggest the next unused month without changing any existing record.
+      let [year, month] = currentMonthId().split('-').map(Number);
+      let id = currentMonthId();
+      while (knownMonthIds.has(id) && year < 9999) {
+        month++; if (month > 12) { month = 1; year++; }
+        id = `${year}-${String(month).padStart(2, '0')}`;
+      }
+      input.value = id;
+      input.disabled = false;
+      document.getElementById('month-picker-submit').disabled = false;
+      updateMonthChoice();
+      input.focus();
+    }
+
+    document.getElementById('new-month-value').addEventListener('input', updateMonthChoice);
+    document.getElementById('new-month-value').addEventListener('change', updateMonthChoice);
+    document.getElementById('month-picker-cancel').addEventListener('click', () => {
+      if (!monthPickerBusy) document.getElementById('month-picker').close();
+    });
+    document.getElementById('month-picker').addEventListener('cancel', event => {
+      if (monthPickerBusy) event.preventDefault();
+    });
+    document.getElementById('month-picker').addEventListener('close', () => { monthPickerVersion++; });
+    document.getElementById('month-picker-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      if (monthPickerBusy) return;
+      const input = document.getElementById('new-month-value');
+      const id = input.value;
+      if (!/^(?!0000)\d{4}-(0[1-9]|1[0-2])$/.test(id)) return;
+      const explicitlyOpening = knownMonthIds.has(id);
+      monthPickerBusy = true;
+      input.disabled = true;
+      document.getElementById('month-picker-submit').disabled = true;
+      document.getElementById('month-picker-cancel').disabled = true;
+      try {
+        const doc = await db.collection('months').doc(id).get();
+        if (doc.exists && !explicitlyOpening) {
+          knownMonthIds.add(id);
+          updateMonthChoice();
+          return;
+        }
+        navigateToMonth(id);
+      } catch (error) {
+        const message = document.getElementById('month-picker-message');
+        message.dataset.error = 'true';
+        message.textContent = '暂时无法确认月份，请检查网络后重试。';
+      } finally {
+        monthPickerBusy = false;
+        input.disabled = false;
+        document.getElementById('month-picker-submit').disabled = false;
+        document.getElementById('month-picker-cancel').disabled = false;
+      }
+    });
 
     // Firebase 初始化
 firebase.initializeApp({
@@ -446,10 +575,12 @@ fetch('data.json').then(r => r.json()).then(d => {
 }).catch(() => {});
 
 // 月份卡片从 Firebase 读
-db.collection('months').get().then(snap => {
+monthsReady = db.collection('months').get().then(snap => {
   const months = snap.docs
     .map(d => ({ id: d.id, ...d.data() }))
     .sort((a, b) => b.id.localeCompare(a.id));
+
+  months.forEach(month => knownMonthIds.add(month.id));
 
   const scatter = document.getElementById('scatter');
 
@@ -507,6 +638,8 @@ db.collection('months').get().then(snap => {
     scatter.appendChild(a);
     setTimeout(() => a.classList.add('visible'), 80 + i * 120);
   });
+}).catch(error => {
+  console.warn('月份列表暂时未能读取。', error);
 });
 
     
